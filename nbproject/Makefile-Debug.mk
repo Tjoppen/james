@@ -31,6 +31,7 @@ OBJECTDIR=build/${CND_CONF}/${CND_PLATFORM}
 
 # Object Files
 OBJECTFILES= \
+	${OBJECTDIR}/XercesString.o \
 	${OBJECTDIR}/main.o
 
 # C Compiler Flags
@@ -56,6 +57,11 @@ LDLIBSOPTIONS=-lxerces-c
 dist/Debug/GNU-Linux-x86/james: ${OBJECTFILES}
 	${MKDIR} -p dist/Debug/GNU-Linux-x86
 	${LINK.cc} -o ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/james ${OBJECTFILES} ${LDLIBSOPTIONS} 
+
+${OBJECTDIR}/XercesString.o: nbproject/Makefile-${CND_CONF}.mk XercesString.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/XercesString.o XercesString.cpp
 
 ${OBJECTDIR}/main.o: nbproject/Makefile-${CND_CONF}.mk main.cpp 
 	${MKDIR} -p ${OBJECTDIR}
