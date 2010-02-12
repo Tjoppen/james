@@ -26,6 +26,7 @@ public:
 };
 
 std::ostream& operator<< (std::ostream& os, const XercesString& str);
+std::ostream& operator<< (std::ostream& os, const XMLCh* str);
 
 #endif	/* _XERCESSTRING_H */
 

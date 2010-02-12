@@ -43,6 +43,13 @@ XercesString::operator const XMLCh* () const {
     return c_str();
 }
 
-std::ostream& operator<< (std::ostream& os, const XercesString& str) {
-    return os << str.c_str();
+ostream& operator<< (ostream& os, const XercesString& str) {
+    return os << (string)str;
+}
+
+ostream& operator<< (ostream& os, const XMLCh* str) {
+    if(!str)
+        return os << "(null)";
+    
+    return os << XercesString(str);
 }
