@@ -45,6 +45,10 @@ string Class::generateParser() const {
 
 }
 
+string Class::generateMemberSetter(string memberName, string nodeName) const {
+    return memberName + "->parseNode(" + nodeName + ");";
+}
+
 string Class::getClassname() const {
     return "shared_ptr<" + name.second + ">";
 }

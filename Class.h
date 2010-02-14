@@ -63,6 +63,11 @@ public:
     virtual std::string generateParser() const;
 
     /**
+     * Should return a code fragment that parses the value of a DOMElement into the named member.
+     */
+    virtual std::string generateMemberSetter(std::string memberName, std::string nodeName) const;
+
+    /**
      * Should return the C++ class name of this Class.
      * Typically these fall into two categories:
      *  build-in simply types ("string" -> std::string, "int" -> int)
