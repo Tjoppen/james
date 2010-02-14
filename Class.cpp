@@ -7,6 +7,8 @@
 
 #include "Class.h"
 #include <sstream>
+#include <stdexcept>
+#include <iostream>
 
 using namespace std;
 
@@ -18,6 +20,25 @@ Class::Class(FullName name, ClassType type, Class *base) : name(name),
 }
 
 Class::~Class() {
+}
+
+void Class::addMember(string name, Member memberInfo) {
+    if(members.find(name) != members.end())
+        throw runtime_error("Member " + name + " defined more than once in " + this->name.second);
+
+    cout << this->name.second << " got " << memberInfo.type.first << ":" << memberInfo.type.second << " " << name << ". Occurance: ";
+
+    if(memberInfo.maxOccurs == UNBOUNDED) {
+        cout << "at least " << memberInfo.minOccurs;
+    } else if(memberInfo.minOccurs == memberInfo.maxOccurs) {
+        cout << "exactly " << memberInfo.minOccurs;
+    } else {
+        cout << "between " << memberInfo.minOccurs << "-" << memberInfo.maxOccurs;
+    }
+
+    cout << endl;
+
+    members[name] = memberInfo;
 }
 
 /**
@@ -42,7 +63,7 @@ string Class::generateNodeSetter(string memberName, string nodeName) const {
 }
 
 string Class::generateParser() const {
-
+    return "";
 }
 
 string Class::generateMemberSetter(string memberName, string nodeName) const {

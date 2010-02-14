@@ -10,6 +10,7 @@
 
 #include <string>
 #include <map>
+#include <limits.h>
 
 #define UNBOUNDED INT_MAX
 
@@ -43,6 +44,8 @@ public:
     Class(FullName name, ClassType type);
     Class(FullName name, ClassType type, Class *base);
     virtual ~Class();
+
+    void addMember(std::string name, Member memberInfo);
 
     /**
      * Should return a code fragment that for appending all the members of this Class.
