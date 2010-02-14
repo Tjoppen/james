@@ -22,9 +22,14 @@ namespace james {
 
     protected:
         /**
-         * Should create and append all variables specified in the schema as DOM nodes to the specified target node.
+         * Should create and append all member variables specified in the schema as DOM nodes to the specified target node.
          */
-        virtual void appendChildren(xercesc::DOMNode *target) const = 0;
+        virtual void appendChildren(xercesc::DOMNode *node) const = 0;
+
+        /**
+         * Should parse the values contained in the specified node into the member variables.
+         */
+        virtual void parseNode(xercesc::DOMNode *node) = 0;
     };
 };
 
