@@ -43,6 +43,14 @@ XercesString::operator const XMLCh* () const {
     return c_str();
 }
 
+bool XercesString::operator== (const string& str) const {
+    return (string)*this == str;
+}
+
+bool XercesString::operator!= (const string& str) const {
+    return !(*this == str);
+}
+
 ostream& operator<< (ostream& os, const XercesString& str) {
     return os << (string)str;
 }

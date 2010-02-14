@@ -23,10 +23,15 @@ public:
 
     operator std::string () const;
     operator const XMLCh* () const;
+
+    bool operator== (const std::string& str) const;
+    bool operator!= (const std::string& str) const;
 };
 
 std::ostream& operator<< (std::ostream& os, const XercesString& str);
 std::ostream& operator<< (std::ostream& os, const XMLCh* str);
+
+#define X(x) XercesString(x)
 
 #endif	/* _XERCESSTRING_H */
 
