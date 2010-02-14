@@ -31,6 +31,8 @@ OBJECTDIR=build/${CND_CONF}/${CND_PLATFORM}
 
 # Object Files
 OBJECTFILES= \
+	${OBJECTDIR}/XMLObject.o \
+	${OBJECTDIR}/Class.o \
 	${OBJECTDIR}/XercesString.o \
 	${OBJECTDIR}/main.o
 
@@ -57,6 +59,16 @@ LDLIBSOPTIONS=-lxerces-c
 dist/Debug/GNU-Linux-x86/james: ${OBJECTFILES}
 	${MKDIR} -p dist/Debug/GNU-Linux-x86
 	${LINK.cc} -o ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/james ${OBJECTFILES} ${LDLIBSOPTIONS} 
+
+${OBJECTDIR}/XMLObject.o: nbproject/Makefile-${CND_CONF}.mk XMLObject.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/XMLObject.o XMLObject.cpp
+
+${OBJECTDIR}/Class.o: nbproject/Makefile-${CND_CONF}.mk Class.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/Class.o Class.cpp
 
 ${OBJECTDIR}/XercesString.o: nbproject/Makefile-${CND_CONF}.mk XercesString.cpp 
 	${MKDIR} -p ${OBJECTDIR}
