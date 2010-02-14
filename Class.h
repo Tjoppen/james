@@ -21,6 +21,7 @@ class Class {
 public:
     class Member {
     public:
+        FullName type;
         Class *cl;
         int minOccurs;
         int maxOccurs;
