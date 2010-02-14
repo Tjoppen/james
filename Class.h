@@ -13,6 +13,10 @@
 
 #define UNBOUNDED INT_MAX
 
+typedef std::string NamespaceName;
+typedef std::string ClassName;
+typedef std::pair<NamespaceName, ClassName> FullName;
+
 class Class {
 public:
     class Member {
@@ -22,11 +26,21 @@ public:
         int maxOccurs;
     };
 
-    std::string ns;
-    std::string name;
+    enum ClassType {
+        SIMPLE_TYPE,
+        COMPLEX_TYPE,
+    };
+
+    FullName name;
+
+    Class *base;
+
+    ClassType type;
+    
     std::map<std::string, Member> members;
 
-    Class(std::string ns, std::string name);
+    Class(FullName name, ClassType type);
+    Class(FullName name, ClassType type, Class *base);
     virtual ~Class();
 };
 
