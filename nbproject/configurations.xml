@@ -8,7 +8,9 @@
         <itemPath>XMLObject.h</itemPath>
       </logicalFolder>
       <itemPath>Class.h</itemPath>
+      <itemPath>IntegerClass.h</itemPath>
       <itemPath>XercesString.h</itemPath>
+      <itemPath>main.h</itemPath>
     </logicalFolder>
     <logicalFolder name="ResourceFiles"
                    displayName="Resource Files"
@@ -21,6 +23,7 @@
         <itemPath>XMLObject.cpp</itemPath>
       </logicalFolder>
       <itemPath>Class.cpp</itemPath>
+      <itemPath>IntegerClass.cpp</itemPath>
       <itemPath>XercesString.cpp</itemPath>
       <itemPath>main.cpp</itemPath>
     </logicalFolder>

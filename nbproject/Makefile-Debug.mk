@@ -32,6 +32,7 @@ OBJECTDIR=build/${CND_CONF}/${CND_PLATFORM}
 # Object Files
 OBJECTFILES= \
 	${OBJECTDIR}/XMLObject.o \
+	${OBJECTDIR}/IntegerClass.o \
 	${OBJECTDIR}/Class.o \
 	${OBJECTDIR}/XercesString.o \
 	${OBJECTDIR}/main.o
@@ -64,6 +65,11 @@ ${OBJECTDIR}/XMLObject.o: nbproject/Makefile-${CND_CONF}.mk XMLObject.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/XMLObject.o XMLObject.cpp
+
+${OBJECTDIR}/IntegerClass.o: nbproject/Makefile-${CND_CONF}.mk IntegerClass.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/IntegerClass.o IntegerClass.cpp
 
 ${OBJECTDIR}/Class.o: nbproject/Makefile-${CND_CONF}.mk Class.cpp 
 	${MKDIR} -p ${OBJECTDIR}
