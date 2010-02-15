@@ -35,6 +35,7 @@ OBJECTFILES= \
 	${OBJECTDIR}/IntegerClass.o \
 	${OBJECTDIR}/Class.o \
 	${OBJECTDIR}/XercesString.o \
+	${OBJECTDIR}/XMLDocument.o \
 	${OBJECTDIR}/main.o
 
 # C Compiler Flags
@@ -80,6 +81,11 @@ ${OBJECTDIR}/XercesString.o: nbproject/Makefile-${CND_CONF}.mk XercesString.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.cc) -O2 -MMD -MP -MF $@.d -o ${OBJECTDIR}/XercesString.o XercesString.cpp
+
+${OBJECTDIR}/XMLDocument.o: nbproject/Makefile-${CND_CONF}.mk XMLDocument.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.cc) -O2 -MMD -MP -MF $@.d -o ${OBJECTDIR}/XMLDocument.o XMLDocument.cpp
 
 ${OBJECTDIR}/main.o: nbproject/Makefile-${CND_CONF}.mk main.cpp 
 	${MKDIR} -p ${OBJECTDIR}

@@ -5,6 +5,7 @@
                    displayName="Header Files"
                    projectFiles="true">
       <logicalFolder name="f1" displayName="james" projectFiles="true">
+        <itemPath>XMLDocument.h</itemPath>
         <itemPath>XMLObject.h</itemPath>
       </logicalFolder>
       <itemPath>Class.h</itemPath>
@@ -20,6 +21,7 @@
                    displayName="Source Files"
                    projectFiles="true">
       <logicalFolder name="f1" displayName="james" projectFiles="true">
+        <itemPath>XMLDocument.cpp</itemPath>
         <itemPath>XMLObject.cpp</itemPath>
       </logicalFolder>
       <itemPath>Class.cpp</itemPath>
