@@ -52,8 +52,15 @@ string Class::generateAppender() const {
         string name = it->first;
         string nodeName = name + "Node";
 
-        oss << "DOMElement *" << nodeName << " = node->getOwnerDocument()->createElement(X(\"" << name << "\"));" << endl;
-        oss << it->second.cl->generateNodeSetter(name, nodeName) << endl;
+        if(it->second.isArray()) {
+            cout << "warning: arrays currently not supported" << endl;
+        } else {
+            oss << "DOMElement *" << nodeName << " = node->getOwnerDocument()->createElement(X(\"" << name << "\"));" << endl;
+            oss << it->second.cl->generateNodeSetter(name, nodeName) << endl;
+            oss << "node->appendChild(" << nodeName << ");" << endl;
+        }
+
+        oss << endl;
     }
 
     return oss.str();
@@ -86,9 +93,16 @@ void Class::writeImplementation(ostream& os) const {
     //cout << "writeImplementation()" << endl;
     ClassName className = name.second;
 
+    os << "#include <sstream>" << endl;
+    os << "#include <xercesc/dom/DOMDocument.hpp>" << endl;
+    os << "#include <xercesc/dom/DOMElement.hpp>" << endl;
+    os << "#include \"XercesString.h\"" << endl;
     os << "#include \"" << className << ".h\"" << endl;
+    os << "using namespace std;" << endl;
+    os << "using namespace xercesc;" << endl;
 
     os << "void " << className << "::appendChildren(xercesc::DOMNode *node) const {" << endl;
+    os << generateAppender() << endl;
     os << "}" << endl << endl;
 }
 

@@ -8,11 +8,12 @@
 #ifndef _XMLOBJECT_H
 #define	_XMLOBJECT_H
 
+#include <xercesc/util/XercesDefs.hpp>
 #include <ostream>
 
-namespace xercesc {
+XERCES_CPP_NAMESPACE_BEGIN
     class DOMNode;
-}
+XERCES_CPP_NAMESPACE_END
 
 namespace james {
     class XMLObject {
