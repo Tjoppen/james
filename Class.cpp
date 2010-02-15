@@ -9,6 +9,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <iostream>
+#include <boost/shared_ptr.hpp>
 
 using namespace std;
 
@@ -109,6 +110,15 @@ void Class::writeImplementation(ostream& os) const {
     os << "using namespace std;" << endl;
     os << "using namespace xercesc;" << endl;
 
+    os << className << "::" << className << "() : XMLObject() {" << endl;
+    
+    //give all basic optional members a default value of zero
+    for(map<string, Member>::const_iterator it = members.begin(); it != members.end(); it++)
+        if(!it->second.isArray() && !it->second.isRequired() && it->second.cl->isBasic)
+            os << it->first << " = 0;" << endl;
+
+    os << "}" << endl << endl;
+
     os << "void " << className << "::appendChildren(xercesc::DOMNode *node) const {" << endl;
     os << generateAppender() << endl;
     os << "}" << endl << endl;
@@ -136,6 +146,8 @@ void Class::writeHeader(ostream& os) const {
     os << "void parseNode(xercesc::DOMNode *node) const;" << endl;
 
     os << "public:" << endl;
+
+    os << className << "();" << endl;
 
     //members
     for(map<string, Member>::const_iterator it = members.begin(); it != members.end(); it++) {
