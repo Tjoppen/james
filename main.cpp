@@ -10,6 +10,7 @@
 #include <string>
 #include <stdexcept>
 #include <sstream>
+#include <fstream>
 #include <boost/shared_ptr.hpp>
 #include <xercesc/parsers/XercesDOMParser.hpp>
 #include <xercesc/util/PlatformUtils.hpp>
@@ -230,15 +231,32 @@ int main(int argc, char** argv) {
 
     work(outputDir, schemaNames);
 
-    /*
     //dump the appenders and parsers of all non-build-in classes
     for(map<FullName, shared_ptr<Class> >::iterator it = classes.begin(); it != classes.end(); it++) {
         if(it->first.first != XSL) {
-            cout << it->second->name.first << ":" << it->second->name.second << endl;
-            cout << it->second->generateAppender() << endl;
-            cout << it->second->generateParser() << endl;
+            {
+                ostringstream oss;
+                oss << outputDir << "/" << it->first.second << ".cpp";
+
+                cout << oss.str() << endl;
+
+                ofstream ofs(oss.str().c_str());
+
+                it->second->writeImplementation(ofs);
+            }
+
+            {
+                ostringstream oss;
+                oss << outputDir << "/" << it->first.second << ".h";
+
+                cout << oss.str() << endl;
+
+                ofstream ofs(oss.str().c_str());
+
+                it->second->writeHeader(ofs);
+            }
         }
-    }*/
+    }
 
     XMLPlatformUtils::Terminate();
 

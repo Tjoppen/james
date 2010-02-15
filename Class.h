@@ -26,6 +26,11 @@ public:
         Class *cl;
         int minOccurs;
         int maxOccurs;
+
+        bool isArray() const;
+        bool isRequired() const;
+
+        std::string getType() const;
     };
 
     enum ClassType {
@@ -38,6 +43,8 @@ public:
     Class *base;
 
     ClassType type;
+
+    bool isBasic;
     
     std::map<std::string, Member> members;
 
@@ -71,12 +78,20 @@ public:
     virtual std::string generateMemberSetter(std::string memberName, std::string nodeName) const;
 
     /**
-     * Should return the C++ class name of this Class.
-     * Typically these fall into two categories:
-     *  build-in simply types ("string" -> std::string, "int" -> int)
-     *  complex types ("ExampleType" -> shared_ptr<ExampleType>)
+     * Should return the name with which to refer to this Class.
      */
     virtual std::string getClassname() const;
+
+    /**
+     * Returns the base member type of this class.
+     * Typically these fall into two categories:
+     *  build-in simple types ("string" -> std::string, "int" -> int)
+     *  complex types ("ExampleType" -> shared_ptr<ExampleType>)
+     */
+    std::string getClassType() const;
+
+    void writeImplementation(std::ostream& os) const;
+    void writeHeader(std::ostream& os) const;
 };
 
 #endif	/* _CLASS_H */

@@ -12,11 +12,12 @@
 
 using namespace std;
 
-Class::Class(FullName name, ClassType type) : name(name), type(type), base(NULL) {
+Class::Class(FullName name, ClassType type) : name(name), type(type), 
+        base(NULL), isBasic(false) {
 }
 
 Class::Class(FullName name, ClassType type, Class *base) : name(name),
-        type(type), base(base) {
+        type(type), base(base), isBasic(false) {
 }
 
 Class::~Class() {
@@ -71,5 +72,71 @@ string Class::generateMemberSetter(string memberName, string nodeName) const {
 }
 
 string Class::getClassname() const {
-    return "shared_ptr<" + name.second + ">";
+    return name.second;
+}
+
+string Class::getClassType() const {
+    if(isBasic)
+        return getClassname();
+    else
+        return "boost::shared_ptr<" + name.second + ">";
+}
+
+void Class::writeImplementation(ostream& os) const {
+    //cout << "writeImplementation()" << endl;
+    ClassName className = name.second;
+
+    os << "#include \"" << className << ".h\"" << endl;
+
+    os << "void " << className << "::appendChildren(xercesc::DOMNode *node) const {" << endl;
+    os << "}" << endl << endl;
+}
+
+void Class::writeHeader(ostream& os) const {
+    ClassName className = name.second;
+
+    os << "#ifndef _" << className << "_H" << endl;
+    os << "#define _" << className << "_H" << endl;
+
+    os << "#include <vector>" << endl;
+    os << "#include <boost/shared_ptr.hpp>" << endl;
+    os << "#include \"XMLObject.h\"" << endl;
+
+    //non-basic member class prototypes
+    for(map<string, Member>::const_iterator it = members.begin(); it != members.end(); it++)
+        if(!it->second.cl->isBasic)
+            os << "class " << it->second.cl->getClassname() << ";" << endl;
+
+    os << "class " << className << " : public james::XMLObject {" << endl;
+
+    //prototypes
+    os << "void appendChildren(xercesc::DOMNode *node) const;" << endl;
+    os << "void parseNode(xercesc::DOMNode *node) const;" << endl;
+
+    os << "public:" << endl;
+
+    //members
+    for(map<string, Member>::const_iterator it = members.begin(); it != members.end(); it++) {
+        os << it->second.getType() << " " << it->first << ";" << endl;
+    }
+
+    os << "};" << endl;
+
+    os << "#endif //_" << className << "_H" << endl;
+}
+
+bool Class::Member::isArray() const {
+    return maxOccurs > 1 || maxOccurs == UNBOUNDED;
+}
+
+bool Class::Member::isRequired() const {
+    return minOccurs >= 1;
+}
+
+string Class::Member::getType() const {
+    //vector if array, regular member otherwise
+    if(isArray()) {
+        return "std::vector<" + cl->getClassname() + " >";
+    } else
+        return cl->getClassname();
 }

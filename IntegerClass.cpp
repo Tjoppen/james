@@ -13,6 +13,7 @@
 using namespace std;
 
 IntegerClass::IntegerClass() : Class(FullName(XSL, "int"), Class::SIMPLE_TYPE) {
+    isBasic = true;
 }
 
 IntegerClass::~IntegerClass() {
