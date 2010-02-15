@@ -42,6 +42,13 @@ map<string, string> nsLUT;
 //collection of all generated classes
 map<FullName, shared_ptr<Class> > classes;
 
+static shared_ptr<Class> addClass(shared_ptr<Class> cl) {
+    if(classes.find(cl->name) != classes.end())
+        throw runtime_error(cl->name.first + ":" + cl->name.second + " defined more than once");
+
+    return classes[cl->name] = cl;
+}
+
 static string lookupNamespace(string typeName) {
     //figures out namespace URI of given type
     size_t pos = typeName.find_last_of(':');
@@ -130,10 +137,7 @@ static void parseComplexType(DOMElement *element, FullName fullName) {
 
             if(name == "sequence") {
                 //TODO: Add new Class based on the name of element
-                if(classes.find(fullName) != classes.end())
-                    throw runtime_error(fullName.second + " defined more than once");
-
-                shared_ptr<Class> cl = classes[fullName] = shared_ptr<Class>(new Class(fullName, Class::COMPLEX_TYPE));
+                shared_ptr<Class> cl = addClass(shared_ptr<Class>(new Class(fullName, Class::COMPLEX_TYPE)));
 
                 parseSequence(element, dynamic_cast<DOMElement*>(child), cl);
             } else if(name == "complexContent") {
@@ -159,15 +163,25 @@ static void parseElement(DOMElement *element, string tns) {
 
     //<complexType>, <element> or <simpleType>
     //figure out its class name
-    FullName fullName(tns, X(element->getAttribute(X("name"))));
+    XercesString name(element->getAttribute(X("name")));
+    FullName fullName(tns, name);
 
-    cout << "\t" << fullName.second << endl;
+    cout << "\t" << "new " << nodeName << ": " << fullName.second << endl;
 
     if(nodeName == "complexType")
         parseComplexType(element, fullName);
-    else if(nodeName == "element")
-        return; //ignore element for now
-    else
+    else if(nodeName == "element") {
+        cout << "element" << endl;
+        //return; //ignore element for now
+        if(!element->hasAttribute(X("type")))
+            throw runtime_error("Missing type on <element>");
+
+        XercesString type(element->getAttribute(X("type")));
+
+        cout << name << " of type " << type << endl;
+
+        addClass(shared_ptr<Class>(new Class(fullName, Class::COMPLEX_TYPE, FullName(tns, type))))->isDocument = true;
+    } else
         return; //ignore simpleType for now
 }
 
@@ -196,9 +210,16 @@ static void work(string outputDir, const vector<string>& schemaNames) {
                 parseElement(dynamic_cast<DOMElement*>(child), tns);
     }
 
-    //make second pass through classes and set all member class pointers correctly
+    //make second pass through classes and set all member and base class pointers correctly
     //this has the side effect of catching any undefined classes
     for(map<FullName, shared_ptr<Class> >::iterator it = classes.begin(); it != classes.end(); it++) {
+        if(it->second->hasBase) {
+            if(classes.find(it->second->baseType) == classes.end())
+                throw runtime_error("Undefined base type " + it->second->baseType.first + ":" + it->second->baseType.second + " of " + it->second->name.first + ":" + it->second->name.second);
+
+            it->second->base = classes[it->second->baseType].get();
+        }
+
         for(map<string, Class::Member>::iterator it2 = it->second->members.begin(); it2 != it->second->members.end(); it2++) {
             if(classes.find(it2->second.type) == classes.end())
                 throw runtime_error("Undefined type " + it2->second.type.first + ":" + it2->second.type.second + " in member " + it2->first + " of " + it->first.first + ":" + it->first.second);

@@ -14,11 +14,12 @@
 using namespace std;
 
 Class::Class(FullName name, ClassType type) : name(name), type(type), 
-        base(NULL), isBasic(false) {
+        base(NULL), isBasic(false), isDocument(false), hasBase(false) {
 }
 
-Class::Class(FullName name, ClassType type, Class *base) : name(name),
-        type(type), base(base), isBasic(false) {
+Class::Class(FullName name, ClassType type, FullName baseType) : name(name),
+        type(type), base(NULL), isBasic(false), isDocument(false),
+        hasBase(true), baseType(baseType) {
 }
 
 Class::~Class() {
@@ -98,6 +99,14 @@ string Class::getClassType() const {
         return "boost::shared_ptr<" + name.second + ">";
 }
 
+string Class::getBaseClassname() const {
+    return hasBase ? base->getClassname() : "james::XMLObject";
+}
+
+string Class::getBaseHeader() const {
+    return hasBase ? base->getClassname() + ".h" : "XMLObject.h";
+}
+
 void Class::writeImplementation(ostream& os) const {
     //cout << "writeImplementation()" << endl;
     ClassName className = name.second;
@@ -110,7 +119,8 @@ void Class::writeImplementation(ostream& os) const {
     os << "using namespace std;" << endl;
     os << "using namespace xercesc;" << endl;
 
-    os << className << "::" << className << "() : XMLObject() {" << endl;
+    //constructor
+    os << className << "::" << className << "() : " << getBaseClassname() << "() {";
     
     //give all basic optional members a default value of zero
     for(map<string, Member>::const_iterator it = members.begin(); it != members.end(); it++)
@@ -119,13 +129,20 @@ void Class::writeImplementation(ostream& os) const {
 
     os << "}" << endl << endl;
 
-    os << "void " << className << "::appendChildren(xercesc::DOMNode *node) const {" << endl;
-    os << generateAppender() << endl;
-    os << "}" << endl << endl;
+    //method implementation
+    if(isDocument) {
+        os << "std::string " << className << "::getName() const {" << endl;
+        os << "return \"" << className << "\";" << endl;
+        os << "}" << endl;
+    } else {
+        os << "void " << className << "::appendChildren(xercesc::DOMNode *node) const {" << endl;
+        os << generateAppender() << endl;
+        os << "}" << endl << endl;
 
-    os << "void " << className << "::parseNode(xercesc::DOMNode *node) {" << endl;
-    os << generateParser() << endl;
-    os << "}" << endl << endl;
+        os << "void " << className << "::parseNode(xercesc::DOMNode *node) {" << endl;
+        os << generateParser() << endl;
+        os << "}" << endl << endl;
+    }
 }
 
 void Class::writeHeader(ostream& os) const {
@@ -136,22 +153,34 @@ void Class::writeHeader(ostream& os) const {
 
     os << "#include <vector>" << endl;
     os << "#include <boost/shared_ptr.hpp>" << endl;
-    os << "#include \"XMLObject.h\"" << endl;
+    os << "#include \"" << getBaseHeader() << "\"" << endl;
+
+    if(isDocument)
+        os << "#include \"XMLDocument.h\"" << endl;
 
     //non-basic member class prototypes
     for(map<string, Member>::const_iterator it = members.begin(); it != members.end(); it++)
         if(!it->second.cl->isBasic)
             os << "class " << it->second.cl->getClassname() << ";" << endl;
 
-    os << "class " << className << " : public james::XMLObject {" << endl;
+    os << "class " << className << " : public " << getBaseClassname();
+    
+    if(isDocument)
+        os << ", public james::XMLDocument" << endl;
+
+    os << " {" << endl;
     os << "public:" << endl;
 
     os << className << "();" << endl;
 
     //prototypes
-    os << "void appendChildren(xercesc::DOMNode *node) const;" << endl;
-    os << "void parseNode(xercesc::DOMNode *node);" << endl;
-
+    if(isDocument)
+        os << "std::string getName() const;" << endl;
+    else {
+        os << "void appendChildren(xercesc::DOMNode *node) const;" << endl;
+        os << "void parseNode(xercesc::DOMNode *node);" << endl;
+    }
+    
     //members
     for(map<string, Member>::const_iterator it = members.begin(); it != members.end(); it++) {
         os << it->second.getType() << " " << it->first << ";" << endl;

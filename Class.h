@@ -38,18 +38,20 @@ public:
         COMPLEX_TYPE,
     };
 
-    FullName name;
-
-    Class *base;
-
-    ClassType type;
+    const FullName name;
+    const ClassType type;
 
     bool isBasic;
+    bool isDocument;            //true if this is a document class
+
+    bool hasBase;
+    const FullName baseType;
+    Class *base;
     
     std::map<std::string, Member> members;
 
     Class(FullName name, ClassType type);
-    Class(FullName name, ClassType type, Class *base);
+    Class(FullName name, ClassType type, FullName baseType);
     virtual ~Class();
 
     void addMember(std::string name, Member memberInfo);
@@ -81,6 +83,16 @@ public:
      * Should return the name with which to refer to this Class.
      */
     virtual std::string getClassname() const;
+
+    /**
+     * Returns classname of base, or XMLObject if none.
+     */
+    std::string getBaseClassname() const;
+
+    /**
+     * Returns name of header wherein the base class is defined.
+     */
+    std::string getBaseHeader() const;
 
     /**
      * Returns the base member type of this class.
