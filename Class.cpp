@@ -50,22 +50,30 @@ string Class::generateAppender() const {
     
     for(std::map<std::string, Member>::const_iterator it = members.begin(); it != members.end(); it++) {
         string name = it->first;
+        string setterName = it->first;
         string nodeName = name + "Node";
 
         if(it->second.isArray()) {
-            cout << "warning: arrays currently not supported" << endl;
-        } else {
-            oss << "DOMElement *" << nodeName << " = node->getOwnerDocument()->createElement(X(\"" << name << "\"));" << endl;
-            oss << it->second.cl->generateNodeSetter(name, nodeName) << endl;
-            oss << "node->appendChild(" << nodeName << ");" << endl;
+            setterName = "(*it)";
+            oss << "for(" << it->second.getType() << "::const_iterator it = " << name << ".begin(); it != " << name << ".end(); it++) {" << endl;
+        } else if(!it->second.isRequired()) {
+            //insert a non-null check
+            oss << "if(" << name << ") {" << endl;
         }
+
+        oss << "DOMElement *" << nodeName << " = node->getOwnerDocument()->createElement(X(\"" << name << "\"));" << endl;
+        oss << it->second.cl->generateNodeSetter(setterName, nodeName) << endl;
+        oss << "node->appendChild(" << nodeName << ");" << endl;
+
+        if(it->second.isArray() || !it->second.isRequired())
+            oss << "}" << endl;
 
         oss << endl;
     }
 
     return oss.str();
 }
-
+//systemet?
 string Class::generateNodeSetter(string memberName, string nodeName) const {
     return memberName + "->appendChildren(" + nodeName + ");";
 }
@@ -150,7 +158,7 @@ bool Class::Member::isRequired() const {
 string Class::Member::getType() const {
     //vector if array, regular member otherwise
     if(isArray()) {
-        return "std::vector<" + cl->getClassname() + " >";
+        return "std::vector<" + cl->getClassType() + " >";
     } else
-        return cl->getClassname();
+        return cl->getClassType();
 }
