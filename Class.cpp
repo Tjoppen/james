@@ -144,14 +144,13 @@ void Class::writeHeader(ostream& os) const {
             os << "class " << it->second.cl->getClassname() << ";" << endl;
 
     os << "class " << className << " : public james::XMLObject {" << endl;
+    os << "public:" << endl;
+
+    os << className << "();" << endl;
 
     //prototypes
     os << "void appendChildren(xercesc::DOMNode *node) const;" << endl;
     os << "void parseNode(xercesc::DOMNode *node);" << endl;
-
-    os << "public:" << endl;
-
-    os << className << "();" << endl;
 
     //members
     for(map<string, Member>::const_iterator it = members.begin(); it != members.end(); it++) {

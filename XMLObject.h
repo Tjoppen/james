@@ -21,7 +21,6 @@ namespace james {
         XMLObject();
         virtual ~XMLObject();
 
-    protected:
         /**
          * Should create and append all member variables specified in the schema as DOM nodes to the specified target node.
          */
