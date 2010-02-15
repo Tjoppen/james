@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="http://example.com/" elementFormDefault="qualified" xmlns="http://example.com/">
+    <xs:complexType name="ExampleComplexType">
+        <xs:sequence>
+            <xs:element name="requiredInteger" type="xs:int"/>
+            <xs:element name="optionalInteger" type="xs:int" minOccurs="0"/>
+            <xs:element name="integerArray" type="xs:int" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="subArray" type="tns:ExampleComplexType" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="sub" type="tns:ExampleComplexType" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:element name="ExampleElement" type="ExampleComplexType"/>
+</xs:schema>
