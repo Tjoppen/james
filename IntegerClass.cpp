@@ -31,7 +31,7 @@ string IntegerClass::generateNodeSetter(string memberName, string nodeName) cons
     oss << "string converted;" << endl;
     oss << "ss << " << memberName << ";" << endl;
     oss << "ss >> converted;" << endl;
-    oss << nodeName << "->setNodeValue(XercesString(converted));" << endl;
+    oss << nodeName << "->setTextContent(XercesString(converted));" << endl;
     oss << "}" << endl;
 
     return oss.str();
