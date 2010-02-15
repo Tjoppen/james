@@ -122,6 +122,10 @@ void Class::writeImplementation(ostream& os) const {
     os << "void " << className << "::appendChildren(xercesc::DOMNode *node) const {" << endl;
     os << generateAppender() << endl;
     os << "}" << endl << endl;
+
+    os << "void " << className << "::parseNode(xercesc::DOMNode *node) {" << endl;
+    os << generateParser() << endl;
+    os << "}" << endl << endl;
 }
 
 void Class::writeHeader(ostream& os) const {
@@ -143,7 +147,7 @@ void Class::writeHeader(ostream& os) const {
 
     //prototypes
     os << "void appendChildren(xercesc::DOMNode *node) const;" << endl;
-    os << "void parseNode(xercesc::DOMNode *node) const;" << endl;
+    os << "void parseNode(xercesc::DOMNode *node);" << endl;
 
     os << "public:" << endl;
 
