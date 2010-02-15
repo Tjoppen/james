@@ -54,5 +54,12 @@ ostream& operator<< (ostream& os, const XMLDocument& doc) {
     //HACKHACK: if we don't do this valgrind complains
     //FIXME: we should call XMLString::release(), but that causes a mismatched delete[] - new thing
     delete str;
-    os << "";
+
+    return os;
+}
+
+istream& operator>> (istream& is, const james::XMLDocument& doc) {
+    //parse XML, then parse objects from the resulting DOM tree
+
+    return is;
 }

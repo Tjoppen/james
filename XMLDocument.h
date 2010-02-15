@@ -27,6 +27,7 @@ namespace james {
 }
 
 std::ostream& operator<< (std::ostream& os, const james::XMLDocument& doc);
+std::istream& operator>> (std::istream& is, const james::XMLDocument& doc);
 
 #endif	/* _XMLDOCUMENT_H */
 
