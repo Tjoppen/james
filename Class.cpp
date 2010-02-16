@@ -142,6 +142,11 @@ void Class::writeImplementation(ostream& os) const {
         os << "}" << endl;
     } else {
         os << "void " << className << "::appendChildren(xercesc::DOMNode *node) const {" << endl;
+        
+        //call base appender
+        if(hasBase)
+            os << base->name.second << "::appendChildren(node);" << endl;
+
         os << generateAppender() << endl;
         os << "}" << endl << endl;
 
