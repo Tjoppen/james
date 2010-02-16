@@ -1,6 +1,7 @@
 #include "ExampleElement.h"
 #include <xercesc/util/PlatformUtils.hpp>
 #include <iostream>
+#include <sstream>
 
 using namespace xercesc;
 using namespace std;
@@ -8,7 +9,10 @@ using namespace std;
 int main(void) {
     XMLPlatformUtils::Initialize();
 
+    stringstream ss;
+
     {
+        //create ExampleElement, populate with ints and shared_ptrs to other objects of the same type
         boost::shared_ptr<ExampleElement> ect(new ExampleElement);
 
         ect->requiredInteger = 1;
@@ -24,7 +28,18 @@ int main(void) {
             ect->subArray.push_back(a);
         }
 
-        cout << *ect << endl;
+        //marshal to stringstream
+        ss << *ect << endl;
+    }
+
+    //print
+    cout << ss.str();
+
+    {
+        boost::shared_ptr<ExampleElement> ect(new ExampleElement);
+
+        //unmarshal to new ExampleElement
+        ss >> *ect;
     }
 
     XMLPlatformUtils::Terminate();
