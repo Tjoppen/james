@@ -7,6 +7,13 @@
             <xs:element name="integerArray" type="xs:int" minOccurs="0" maxOccurs="unbounded"/>
             <xs:element name="subArray" type="tns:ExampleComplexType" minOccurs="0" maxOccurs="unbounded"/>
             <xs:element name="sub" type="tns:ExampleComplexType" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="subType" minOccurs="0">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="integer" type="xs:int"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
         </xs:sequence>
     </xs:complexType>
 

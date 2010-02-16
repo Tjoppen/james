@@ -1,4 +1,5 @@
 #include "ExampleElement.h"
+#include "ExampleComplexType_subType.h"
 #include <xercesc/util/PlatformUtils.hpp>
 #include <iostream>
 #include <sstream>
@@ -20,6 +21,9 @@ int main(void) {
 
         ect->sub = boost::shared_ptr<ExampleComplexType>(new ExampleComplexType);
         ect->sub->requiredInteger = 2;
+
+        ect->subType = boost::shared_ptr<ExampleComplexType_subType>(new ExampleComplexType_subType);
+        ect->subType->integer = 2;
 
         for(int x = 3; x < 10; x++) {
             ect->integerArray.push_back(x + 10);
