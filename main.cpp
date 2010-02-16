@@ -118,6 +118,7 @@ static void parseSequence(DOMElement *parent, DOMElement *sequence, shared_ptr<C
                 info.type = toFullName(X(childElement->getAttribute(typeStr)));
                 info.minOccurs = minOccurs;
                 info.maxOccurs = maxOccurs;
+                info.isAttribute = false;
 
                 cl->addMember(name, info);
             } else {
@@ -140,6 +141,7 @@ static void parseSequence(DOMElement *parent, DOMElement *sequence, shared_ptr<C
                 info.type = subName;
                 info.minOccurs = minOccurs;
                 info.maxOccurs = maxOccurs;
+                info.isAttribute = false;
 
                 cl->addMember(name, info);
             }

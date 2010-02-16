@@ -26,6 +26,7 @@ public:
         Class *cl;
         int minOccurs;
         int maxOccurs;
+        bool isAttribute;   //true if this member is an attribute rather than an element
 
         bool isArray() const;
         bool isRequired() const;
