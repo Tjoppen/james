@@ -116,6 +116,12 @@ void Class::writeImplementation(ostream& os) const {
     os << "#include <xercesc/dom/DOMElement.hpp>" << endl;
     os << "#include \"XercesString.h\"" << endl;
     os << "#include \"" << className << ".h\"" << endl;
+
+    //include headers of all non-basic member types that aren't us
+    for(map<string, Member>::const_iterator it = members.begin(); it != members.end(); it++)
+        if(!it->second.cl->isBasic && it->second.cl != this)
+            os << "#include \"" << it->second.cl->name.second << ".h\"" << endl;
+
     os << "using namespace std;" << endl;
     os << "using namespace xercesc;" << endl;
 
