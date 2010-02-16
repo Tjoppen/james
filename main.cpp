@@ -72,6 +72,8 @@ static FullName toFullName(string typeName) {
     return FullName(lookupNamespace(typeName), stripNamespace(typeName));
 }
 
+static void parseComplexType(DOMElement *element, FullName fullName);
+
 static void parseSequence(DOMElement *parent, DOMElement *sequence, shared_ptr<Class> cl) {
     //we expect to see a whole bunch of <element>s here
     CHECK(parent);
@@ -120,7 +122,26 @@ static void parseSequence(DOMElement *parent, DOMElement *sequence, shared_ptr<C
                 cl->addMember(name, info);
             } else {
                 //no type - anonymous subtype
-                throw runtime_error("Anonymous types not yet supported");
+                //generate name
+                FullName subName(cl->name.first, cl->name.second + "_" + (string)name);
+
+                //expect <complexType> sub-tag
+                DOMNode *child2;
+                for(child2 = child->getFirstChild(); child2; child2 = child2->getNextSibling())
+                    if(child2->getNodeType() == DOMNode::ELEMENT_NODE && child2->getLocalName() && X(child2->getLocalName()) == "complexType") {
+                        parseComplexType(dynamic_cast<DOMElement*>(child2), subName);
+                        break;
+                    }
+
+                if(!child2)
+                    throw runtime_error("Missing <complexType> in anonymous type in " + cl->name.second);
+
+                Class::Member info;
+                info.type = subName;
+                info.minOccurs = minOccurs;
+                info.maxOccurs = maxOccurs;
+
+                cl->addMember(name, info);
             }
         }
 }
