@@ -35,6 +35,7 @@ ostream& operator<< (ostream& os, const XMLDocument& doc) {
     
     if(!writer)             throw runtime_error("Failed to create DOM writer");
 
+    //get name of root element and create new DOM dodument
     DOMDocument *document = implementation->createDocument(0, X(doc.getName()), 0);
 
     if(!document)           throw runtime_error("Failed to create DOM document");
@@ -43,9 +44,13 @@ ostream& operator<< (ostream& os, const XMLDocument& doc) {
 
     if(!root)               throw runtime_error("Failed failed to get DOM document element");
 
+    //append the nodes of each member variable to the root element in a recursive fashion
     object->appendChildren(root);
+
+    //serialize
     XMLCh *str = writer->writeToString(*root);
 
+    //convert XMLCh* string to std::string
     os << X(str);
 
     writer->release();
@@ -58,7 +63,7 @@ ostream& operator<< (ostream& os, const XMLDocument& doc) {
     return os;
 }
 
-istream& operator>> (istream& is, const james::XMLDocument& doc) {
+istream& operator>> (istream& is, const XMLDocument& doc) {
     //parse XML, then parse objects from the resulting DOM tree
 
     return is;
