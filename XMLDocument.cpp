@@ -108,7 +108,17 @@ istream& operator>> (istream& is, const XMLDocument& doc) {
 
     const XMLObject *object = dynamic_cast<const XMLObject*>(&doc);
     DOMDocument     *document = parser.getDocument();
+
+    if(!object)     throw runtime_error(doc.getName() + " is not a sibling class of XMLObject");
+    if(!document)   throw runtime_error("Failed to parse document");
+
     DOMElement      *root = document->getDocumentElement();
+
+    if(!root)       throw runtime_error("Failed to get document root");
+
+    //check that the name of the root node matches the name of the XMLDocument
+    if(!root->getLocalName() || X(root->getLocalName()) != doc.getName())
+        throw runtime_error("No local name for DOM document or supplied XML is not a " + doc.getName());
 
     return is;
 }
