@@ -46,7 +46,7 @@ string IntegerClass::generateMemberSetter(string memberName, string nodeName) co
 
     oss << "{" << endl;
     oss << "stringstream ss;" << endl;
-    oss << "ss << XercesString(" << nodeName << "->getNodeValue());" << endl;
+    oss << "ss << XercesString(" << nodeName << "->getTextContent());" << endl;
     oss << "ss >> " << memberName << ";" << endl;
     oss << "}" << endl;
 
