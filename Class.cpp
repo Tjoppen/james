@@ -61,6 +61,8 @@ string Class::generateAppender() const {
         } else if(!it->second.isRequired()) {
             //insert a non-null check
             oss << "if(" << name << ") {" << endl;
+        } else {
+            //required member - check for its existance
         }
 
         oss << "DOMElement *" << nodeName << " = node->getOwnerDocument()->createElement(X(\"" << name << "\"));" << endl;
@@ -81,11 +83,41 @@ string Class::generateNodeSetter(string memberName, string nodeName) const {
 }
 
 string Class::generateParser() const {
-    return "";
+    ostringstream oss;
+
+    oss << "for(DOMNode *child = node->getFirstChild(); child; child = child->getNextSibling()) {" << endl;
+    oss << "if(!child->getLocalName()) continue;" << endl;
+    oss << "XercesString name(child->getLocalName());" << endl;
+
+    //TODO: replace this with a map<pair<string, DOMNode::ElementType>, void(*)(DOMNode*)> thing?
+    //in other words, lookin up parsing function pointers in a map should be faster then all these string comparisons
+    for(std::map<std::string, Member>::const_iterator it = members.begin(); it != members.end(); it++) {
+        oss << "if(name == \"" << it->first << "\" && child->getNodeType() == DOMNode::" << (it->second.isAttribute ? "ATTRIBUTE_NODE" : "ELEMENT_NODE") << ") {" << endl;
+
+        string memberName = it->first;
+        if(it->second.isArray()) {
+            oss << it->second.cl->getClassType() << " temp;" << endl;
+            memberName = "temp";
+        }
+
+        oss << it->second.cl->generateMemberSetter(memberName, "child");
+
+        oss << "}" << endl;
+    }
+
+    oss << "}" << endl;
+
+    return oss.str();
 }
 
 string Class::generateMemberSetter(string memberName, string nodeName) const {
-    return memberName + "->parseNode(" + nodeName + ");";
+    ostringstream oss;
+
+    //TODO: add check & allocation for shared_ptr if non-basic
+    
+    oss << memberName << "->parseNode(" << nodeName << ");" << endl;
+
+    return oss.str();
 }
 
 string Class::getClassname() const {
