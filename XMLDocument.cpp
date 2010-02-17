@@ -12,7 +12,12 @@
 #include <xercesc/dom/DOMElement.hpp>
 #include <xercesc/dom/DOMWriter.hpp>
 #include <xercesc/util/XMLString.hpp>
+#include <xercesc/parsers/XercesDOMParser.hpp>
+#include <xercesc/util/BinInputStream.hpp>
+#include <xercesc/framework/StdInInputSource.hpp>
 #include <stdexcept>
+#include <istream>
+#include <ostream>
 #include "XMLDocument.h"
 #include "XMLObject.h"
 #include "XercesString.h"
@@ -20,6 +25,37 @@
 using namespace xercesc;
 using namespace james;
 using namespace std;
+
+/**
+ * Utility class for parsing directly from an std::istream
+ */
+class IStreamInputSource : public InputSource {
+    istream &is;
+
+    class IStreamBinInputStream : public BinInputStream {
+        istream &is;
+    public:
+        IStreamBinInputStream(istream &is) : BinInputStream(), is(is) {
+        }
+
+        unsigned int curPos(void) const {
+            return is.tellg();
+        }
+
+        unsigned int readBytes(XMLByte* const buf, const unsigned int max) {
+            is.read((char*)buf, max);
+
+            return is.gcount();
+        }
+    };
+public:
+    IStreamInputSource(istream &is) : InputSource(), is(is) {
+    }
+
+    BinInputStream* makeStream() const {
+        return new IStreamBinInputStream(is);
+    }
+};
 
 ostream& operator<< (ostream& os, const XMLDocument& doc) {
     //TODO: make exception safe
@@ -65,6 +101,14 @@ ostream& operator<< (ostream& os, const XMLDocument& doc) {
 
 istream& operator>> (istream& is, const XMLDocument& doc) {
     //parse XML, then parse objects from the resulting DOM tree
+    XercesDOMParser parser;
+
+    parser.setDoNamespaces(true);
+    parser.parse(IStreamInputSource(is));
+
+    const XMLObject *object = dynamic_cast<const XMLObject*>(&doc);
+    DOMDocument     *document = parser.getDocument();
+    DOMElement      *root = document->getDocumentElement();
 
     return is;
 }

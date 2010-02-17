@@ -9,7 +9,6 @@
 #define	_XMLDOCUMENT_H
 
 #include <string>
-#include <ostream>
 
 namespace james {
     /**
