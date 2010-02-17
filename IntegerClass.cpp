@@ -18,6 +18,10 @@ IntegerClass::IntegerClass() : Class(FullName(XSL, "int"), Class::SIMPLE_TYPE) {
 IntegerClass::~IntegerClass() {
 }
 
+bool IntegerClass::isBuiltIn() const {
+    return true;
+}
+
 string IntegerClass::generateAppender() const {
     throw runtime_error("generateAppender() called in IntegerClass");
 }

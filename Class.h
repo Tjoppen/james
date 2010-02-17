@@ -40,6 +40,7 @@ public:
     };
 
     bool isSimple() const;
+    virtual bool isBuiltIn() const;
 
     const FullName name;
     const ClassType type;

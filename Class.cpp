@@ -29,6 +29,10 @@ bool Class::isSimple() const {
     return type == SIMPLE_TYPE;
 }
 
+bool Class::isBuiltIn() const {
+    return false;
+}
+
 void Class::addMember(string name, Member memberInfo) {
     if(members.find(name) != members.end())
         throw runtime_error("Member " + name + " defined more than once in " + this->name.second);

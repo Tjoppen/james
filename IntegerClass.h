@@ -15,6 +15,8 @@ public:
     IntegerClass();
     virtual ~IntegerClass();
 
+    bool isBuiltIn() const;
+
     std::string generateAppender() const;
     std::string generateNodeSetter(std::string memberName, std::string nodeName) const;
     std::string generateParser() const;

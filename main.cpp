@@ -302,7 +302,8 @@ int main(int argc, char** argv) {
 
     //dump the appenders and parsers of all non-build-in classes
     for(map<FullName, shared_ptr<Class> >::iterator it = classes.begin(); it != classes.end(); it++) {
-        if(it->first.first != XSL) {
+        if(!it->second->isBuiltIn()) {
+            if(!it->second->isSimple())
             {
                 ostringstream oss;
                 oss << outputDir << "/" << it->first.second << ".cpp";
