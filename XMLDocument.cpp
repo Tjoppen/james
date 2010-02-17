@@ -99,14 +99,14 @@ ostream& operator<< (ostream& os, const XMLDocument& doc) {
     return os;
 }
 
-istream& operator>> (istream& is, const XMLDocument& doc) {
+istream& operator>> (istream& is, XMLDocument& doc) {
     //parse XML, then parse objects from the resulting DOM tree
     XercesDOMParser parser;
 
     parser.setDoNamespaces(true);
     parser.parse(IStreamInputSource(is));
 
-    const XMLObject *object = dynamic_cast<const XMLObject*>(&doc);
+    XMLObject       *object = dynamic_cast<XMLObject*>(&doc);
     DOMDocument     *document = parser.getDocument();
 
     if(!object)     throw runtime_error(doc.getName() + " is not a sibling class of XMLObject");
@@ -119,6 +119,8 @@ istream& operator>> (istream& is, const XMLDocument& doc) {
     //check that the name of the root node matches the name of the XMLDocument
     if(!root->getLocalName() || X(root->getLocalName()) != doc.getName())
         throw runtime_error("No local name for DOM document or supplied XML is not a " + doc.getName());
+
+    object->parseNode(root);
 
     return is;
 }
