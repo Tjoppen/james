@@ -3,6 +3,7 @@
 #include <xercesc/util/PlatformUtils.hpp>
 #include <iostream>
 #include <sstream>
+#include <boost/algorithm/string/trim.hpp>
 
 using namespace xercesc;
 using namespace std;
@@ -51,7 +52,13 @@ int main(void) {
 
     cout << ss2.str() << endl;
 
-    if(ss.str() == ss2.str())
+    string a = ss.str()
+    string b = ss2.str();
+    
+    boost::algorithm::trim(a);
+    boost::algorithm::trim(b);
+
+    if(a == b)
         cout << "Success!" << endl;
     else
         cout << "String mismatch - objects probably incorrectly marshalled/unmarshalled" << endl;
