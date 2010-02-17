@@ -10,7 +10,7 @@ using namespace std;
 int main(void) {
     XMLPlatformUtils::Initialize();
 
-    stringstream ss;
+    stringstream ss, ss2;
 
     {
         //create ExampleElement, populate with ints and shared_ptrs to other objects of the same type
@@ -37,14 +37,24 @@ int main(void) {
     }
 
     //print
-    cout << ss.str();
+    cout << ss.str() << endl;
 
     {
         boost::shared_ptr<ExampleElement> ect(new ExampleElement);
 
         //unmarshal to new ExampleElement
         ss >> *ect;
+
+        //re-marshal to a string that should match the old one
+        ss2 << *ect;
     }
+
+    cout << ss2.str() << endl;
+
+    if(ss.str() == ss2.str())
+        cout << "Success!" << endl;
+    else
+        cout << "String mismatch - objects probably incorrectly marshalled/unmarshalled" << endl;
 
     XMLPlatformUtils::Terminate();
 
