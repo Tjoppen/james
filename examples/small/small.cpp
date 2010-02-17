@@ -52,7 +52,7 @@ int main(void) {
 
     cout << ss2.str() << endl;
 
-    string a = ss.str()
+    string a = ss.str();
     string b = ss2.str();
     
     boost::algorithm::trim(a);
