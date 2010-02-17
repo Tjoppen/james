@@ -96,11 +96,26 @@ string Class::generateParser() const {
 
         string memberName = it->first;
         if(it->second.isArray()) {
-            oss << it->second.cl->getClassType() << " temp;" << endl;
             memberName = "temp";
+            oss << it->second.cl->getClassType() << " " << memberName;
+
+            if(it->second.cl->isBasic) {
+                //for basic types we're done
+                oss << ";" << endl;
+            } else {
+                //for non-basic types we need to set the contents of the shared_ptr
+                oss << "(new " << it->second.cl->getClassname() << ");" << endl;
+            }
+        } else if(!it->second.cl->isBasic) {
+            //add check and allocation of shared_ptr
+            oss << "if(!" << memberName << ") " << memberName << " = boost::shared_ptr<" << it->second.cl->getClassname() << ">(new " << it->second.cl->getClassname() << ");" << endl;
         }
 
         oss << it->second.cl->generateMemberSetter(memberName, "child");
+
+        if(it->second.isArray()) {
+            oss << it->first << ".push_back(" << memberName << ");" << endl;
+        }
 
         oss << "}" << endl;
     }
