@@ -42,7 +42,6 @@ public:
     const FullName name;
     const ClassType type;
 
-    bool isBasic;
     bool isDocument;            //true if this is a document class
 
     bool hasBase;

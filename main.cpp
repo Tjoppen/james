@@ -172,6 +172,29 @@ static void parseComplexType(DOMElement *element, FullName fullName) {
     }
 }
 
+static void parseSimpleType(DOMElement *element, FullName fullName) {
+    //expect a <restriction> child element
+    CHECK(element);
+
+    for(DOMNode *child = element->getFirstChild(); child; child = child->getNextSibling())
+        if(child->getNodeType() == DOMNode::ELEMENT_NODE && child->getLocalName() && X(child->getLocalName()) == "restriction") {
+            DOMElement *childElement = dynamic_cast<DOMElement*>(child);
+            CHECK(childElement);
+
+            if(!childElement->hasAttribute(X("base")))
+                throw runtime_error("simpleType restriction lacks expected attribute 'base'");
+
+            //convert xs:string and the like to their respective FullName
+            FullName baseName = toFullName(X(childElement->getAttribute(X("base"))));
+
+            //add class and return
+            addClass(shared_ptr<Class>(new Class(fullName, Class::SIMPLE_TYPE, baseName)));
+            return;
+        }
+
+    throw runtime_error("simpleType expected restriction");
+}
+
 static void parseElement(DOMElement *element, string tns) {
     CHECK(element);
 
@@ -194,7 +217,6 @@ static void parseElement(DOMElement *element, string tns) {
     if(nodeName == "complexType")
         parseComplexType(element, fullName);
     else if(nodeName == "element") {
-        cout << "element" << endl;
         //return; //ignore element for now
         if(!element->hasAttribute(X("type")))
             throw runtime_error("Missing type on <element>");
@@ -204,8 +226,9 @@ static void parseElement(DOMElement *element, string tns) {
         cout << name << " of type " << type << endl;
 
         addClass(shared_ptr<Class>(new Class(fullName, Class::COMPLEX_TYPE, FullName(tns, type))))->isDocument = true;
-    } else
-        return; //ignore simpleType for now
+    } else if(nodeName == "simpleType") {
+        parseSimpleType(element, fullName);
+    }
 }
 
 static void work(string outputDir, const vector<string>& schemaNames) {
@@ -232,6 +255,8 @@ static void work(string outputDir, const vector<string>& schemaNames) {
             if(child->getNodeType() == DOMNode::ELEMENT_NODE)
                 parseElement(dynamic_cast<DOMElement*>(child), tns);
     }
+
+    cout << "About to make second pass. Pointing class members to referenced classes, or failing if any undefined classes are encountered." << endl;
 
     //make second pass through classes and set all member and base class pointers correctly
     //this has the side effect of catching any undefined classes

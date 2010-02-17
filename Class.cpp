@@ -14,11 +14,11 @@
 using namespace std;
 
 Class::Class(FullName name, ClassType type) : name(name), type(type), 
-        base(NULL), isBasic(false), isDocument(false), hasBase(false) {
+        base(NULL), isDocument(false), hasBase(false) {
 }
 
 Class::Class(FullName name, ClassType type, FullName baseType) : name(name),
-        type(type), base(NULL), isBasic(false), isDocument(false),
+        type(type), base(NULL), isDocument(false),
         hasBase(true), baseType(baseType) {
 }
 
@@ -79,6 +79,9 @@ string Class::generateAppender() const {
 }
 //systemet?
 string Class::generateNodeSetter(string memberName, string nodeName) const {
+    if(type == SIMPLE_TYPE && base)
+        return base->generateNodeSetter(memberName, nodeName);
+
     return memberName + "->appendChildren(" + nodeName + ");";
 }
 
@@ -99,14 +102,14 @@ string Class::generateParser() const {
             memberName = "temp";
             oss << it->second.cl->getClassType() << " " << memberName;
 
-            if(it->second.cl->isBasic) {
-                //for basic types we're done
+            if(it->second.cl->type == SIMPLE_TYPE) {
+                //for simple types we're done
                 oss << ";" << endl;
             } else {
                 //for non-basic types we need to set the contents of the shared_ptr
                 oss << "(new " << it->second.cl->getClassname() << ");" << endl;
             }
-        } else if(!it->second.cl->isBasic) {
+        } else if(!it->second.cl->type == SIMPLE_TYPE) {
             //add check and allocation of shared_ptr
             oss << "if(!" << memberName << ") " << memberName << " = boost::shared_ptr<" << it->second.cl->getClassname() << ">(new " << it->second.cl->getClassname() << ");" << endl;
         }
@@ -126,21 +129,25 @@ string Class::generateParser() const {
 }
 
 string Class::generateMemberSetter(string memberName, string nodeName) const {
+    if(type == SIMPLE_TYPE && base)
+        return base->generateMemberSetter(memberName, nodeName);
+
     ostringstream oss;
 
-    //TODO: add check & allocation for shared_ptr if non-basic
-    
     oss << memberName << "->parseNode(" << nodeName << ");" << endl;
 
     return oss.str();
 }
 
 string Class::getClassname() const {
-    return name.second;
+    if(type == SIMPLE_TYPE && base)
+        return base->getClassname();
+    else
+        return name.second;
 }
 
 string Class::getClassType() const {
-    if(isBasic)
+    if(type == SIMPLE_TYPE)
         return getClassname();
     else
         return "boost::shared_ptr<" + name.second + ">";
@@ -164,9 +171,13 @@ void Class::writeImplementation(ostream& os) const {
     os << "#include \"XercesString.h\"" << endl;
     os << "#include \"" << className << ".h\"" << endl;
 
+    //no implementation needed for simple types
+    if(type == SIMPLE_TYPE)
+        return;
+
     //include headers of all non-basic member types that aren't us
     for(map<string, Member>::const_iterator it = members.begin(); it != members.end(); it++)
-        if(!it->second.cl->isBasic && it->second.cl != this)
+        if(!it->second.cl->type == SIMPLE_TYPE && it->second.cl != this)
             os << "#include \"" << it->second.cl->name.second << ".h\"" << endl;
 
     os << "using namespace std;" << endl;
@@ -177,7 +188,7 @@ void Class::writeImplementation(ostream& os) const {
     
     //give all basic optional members a default value of zero
     for(map<string, Member>::const_iterator it = members.begin(); it != members.end(); it++)
-        if(!it->second.isArray() && !it->second.isRequired() && it->second.cl->isBasic)
+        if(!it->second.isArray() && !it->second.isRequired() && it->second.cl->type == SIMPLE_TYPE)
             os << it->first << " = 0;" << endl;
 
     os << "}" << endl << endl;
@@ -211,41 +222,47 @@ void Class::writeHeader(ostream& os) const {
 
     os << "#include <vector>" << endl;
     os << "#include <boost/shared_ptr.hpp>" << endl;
-    os << "#include \"" << getBaseHeader() << "\"" << endl;
 
-    if(isDocument)
-        os << "#include \"XMLDocument.h\"" << endl;
+    //simple types only need a typedef
+    if(type == SIMPLE_TYPE) {
+        os << "typedef " << base->getClassname() << " " << name.second << ";" << endl;
+    } else {
+        os << "#include \"" << getBaseHeader() << "\"" << endl;
 
-    //non-basic member class prototypes
-    for(map<string, Member>::const_iterator it = members.begin(); it != members.end(); it++)
-        if(!it->second.cl->isBasic)
-            os << "class " << it->second.cl->getClassname() << ";" << endl;
+        if(isDocument)
+            os << "#include \"XMLDocument.h\"" << endl;
 
-    os << "class " << className << " : public " << getBaseClassname();
-    
-    if(isDocument)
-        os << ", public james::XMLDocument" << endl;
+        //non-basic member class prototypes
+        for(map<string, Member>::const_iterator it = members.begin(); it != members.end(); it++)
+            if(!it->second.cl->type == SIMPLE_TYPE)
+                os << "class " << it->second.cl->getClassname() << ";" << endl;
 
-    os << " {" << endl;
-    os << "public:" << endl;
+        os << "class " << className << " : public " << getBaseClassname();
 
-    os << className << "();" << endl;
+        if(isDocument)
+            os << ", public james::XMLDocument" << endl;
 
-    //prototypes
-    if(isDocument)
-        os << "std::string getName() const;" << endl;
-    else {
-        os << "void appendChildren(xercesc::DOMNode *node) const;" << endl;
-        os << "void parseNode(xercesc::DOMNode *node);" << endl;
+        os << " {" << endl;
+        os << "public:" << endl;
+
+        os << className << "();" << endl;
+
+        //prototypes
+        if(isDocument)
+            os << "std::string getName() const;" << endl;
+        else {
+            os << "void appendChildren(xercesc::DOMNode *node) const;" << endl;
+            os << "void parseNode(xercesc::DOMNode *node);" << endl;
+        }
+
+        //members
+        for(map<string, Member>::const_iterator it = members.begin(); it != members.end(); it++) {
+            os << it->second.getType() << " " << it->first << ";" << endl;
+        }
+
+        os << "};" << endl;
     }
     
-    //members
-    for(map<string, Member>::const_iterator it = members.begin(); it != members.end(); it++) {
-        os << it->second.getType() << " " << it->first << ";" << endl;
-    }
-
-    os << "};" << endl;
-
     os << "#endif //_" << className << "_H" << endl;
 }
 
