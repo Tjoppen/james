@@ -25,6 +25,10 @@ Class::Class(FullName name, ClassType type, FullName baseType) : name(name),
 Class::~Class() {
 }
 
+bool Class::isSimple() const {
+    return type == SIMPLE_TYPE;
+}
+
 void Class::addMember(string name, Member memberInfo) {
     if(members.find(name) != members.end())
         throw runtime_error("Member " + name + " defined more than once in " + this->name.second);
@@ -77,9 +81,9 @@ string Class::generateAppender() const {
 
     return oss.str();
 }
-//systemet?
+
 string Class::generateNodeSetter(string memberName, string nodeName) const {
-    if(type == SIMPLE_TYPE && base)
+    if(isSimple() && base)
         return base->generateNodeSetter(memberName, nodeName);
 
     return memberName + "->appendChildren(" + nodeName + ");";
@@ -102,14 +106,14 @@ string Class::generateParser() const {
             memberName = "temp";
             oss << it->second.cl->getClassType() << " " << memberName;
 
-            if(it->second.cl->type == SIMPLE_TYPE) {
+            if(it->second.cl->isSimple()) {
                 //for simple types we're done
                 oss << ";" << endl;
             } else {
                 //for non-basic types we need to set the contents of the shared_ptr
                 oss << "(new " << it->second.cl->getClassname() << ");" << endl;
             }
-        } else if(!it->second.cl->type == SIMPLE_TYPE) {
+        } else if(!it->second.cl->isSimple()) {
             //add check and allocation of shared_ptr
             oss << "if(!" << memberName << ") " << memberName << " = boost::shared_ptr<" << it->second.cl->getClassname() << ">(new " << it->second.cl->getClassname() << ");" << endl;
         }
@@ -129,7 +133,7 @@ string Class::generateParser() const {
 }
 
 string Class::generateMemberSetter(string memberName, string nodeName) const {
-    if(type == SIMPLE_TYPE && base)
+    if(isSimple() && base)
         return base->generateMemberSetter(memberName, nodeName);
 
     ostringstream oss;
@@ -140,14 +144,14 @@ string Class::generateMemberSetter(string memberName, string nodeName) const {
 }
 
 string Class::getClassname() const {
-    if(type == SIMPLE_TYPE && base)
+    if(isSimple() && base)
         return base->getClassname();
     else
         return name.second;
 }
 
 string Class::getClassType() const {
-    if(type == SIMPLE_TYPE)
+    if(isSimple())
         return getClassname();
     else
         return "boost::shared_ptr<" + name.second + ">";
@@ -172,12 +176,12 @@ void Class::writeImplementation(ostream& os) const {
     os << "#include \"" << className << ".h\"" << endl;
 
     //no implementation needed for simple types
-    if(type == SIMPLE_TYPE)
+    if(isSimple())
         return;
 
     //include headers of all non-basic member types that aren't us
     for(map<string, Member>::const_iterator it = members.begin(); it != members.end(); it++)
-        if(!it->second.cl->type == SIMPLE_TYPE && it->second.cl != this)
+        if(!it->second.cl->isSimple() && it->second.cl != this)
             os << "#include \"" << it->second.cl->name.second << ".h\"" << endl;
 
     os << "using namespace std;" << endl;
@@ -188,7 +192,7 @@ void Class::writeImplementation(ostream& os) const {
     
     //give all basic optional members a default value of zero
     for(map<string, Member>::const_iterator it = members.begin(); it != members.end(); it++)
-        if(!it->second.isArray() && !it->second.isRequired() && it->second.cl->type == SIMPLE_TYPE)
+        if(!it->second.isArray() && !it->second.isRequired() && it->second.cl->isSimple())
             os << it->first << " = 0;" << endl;
 
     os << "}" << endl << endl;
@@ -224,7 +228,7 @@ void Class::writeHeader(ostream& os) const {
     os << "#include <boost/shared_ptr.hpp>" << endl;
 
     //simple types only need a typedef
-    if(type == SIMPLE_TYPE) {
+    if(isSimple()) {
         os << "typedef " << base->getClassname() << " " << name.second << ";" << endl;
     } else {
         os << "#include \"" << getBaseHeader() << "\"" << endl;
@@ -234,7 +238,7 @@ void Class::writeHeader(ostream& os) const {
 
         //non-basic member class prototypes
         for(map<string, Member>::const_iterator it = members.begin(); it != members.end(); it++)
-            if(!it->second.cl->type == SIMPLE_TYPE)
+            if(!it->second.cl->isSimple())
                 os << "class " << it->second.cl->getClassname() << ";" << endl;
 
         os << "class " << className << " : public " << getBaseClassname();

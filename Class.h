@@ -39,6 +39,8 @@ public:
         COMPLEX_TYPE,
     };
 
+    bool isSimple() const;
+
     const FullName name;
     const ClassType type;
 
