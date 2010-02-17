@@ -14,7 +14,7 @@
 #include <xercesc/util/XMLString.hpp>
 #include <xercesc/parsers/XercesDOMParser.hpp>
 #include <xercesc/util/BinInputStream.hpp>
-#include <xercesc/framework/StdInInputSource.hpp>
+#include <xercesc/sax/InputSource.hpp>
 #include <stdexcept>
 #include <istream>
 #include <ostream>
@@ -27,7 +27,7 @@ using namespace james;
 using namespace std;
 
 /**
- * Utility class for parsing directly from an std::istream
+ * Minimal utility class for parsing directly from an std::istream.
  */
 class IStreamInputSource : public InputSource {
     istream &is;
