@@ -43,6 +43,10 @@ GENERATE_BUILTIN(StringClass, "string", "std::string", "std::string()")
         return nodeName + "->setTextContent(XercesString(" + memberName + "));";
     }
 
+    std::string generateMemberSetter(std::string memberName, std::string nodeName) const {
+        return memberName + " = XercesString(" + nodeName + "->getTextContent());";
+    }
+
     std::string getTester(std::string name) const {
         return name + ".length() > 0";
     }
