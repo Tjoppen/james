@@ -24,7 +24,7 @@
 #include "main.h"
 #include "XercesString.h"
 #include "Class.h"
-#include "IntegerClass.h"
+#include "BuiltInClasses.h"
 
 using namespace std;
 using namespace boost;
@@ -290,7 +290,10 @@ int main(int argc, char** argv) {
     nsLUT["xsl"] = XSL;
     nsLUT["xsd"] = XSL;
     
-    classes[FullName(XSL, "int")] = shared_ptr<Class>(new IntegerClass);
+    addClass(shared_ptr<Class>(new IntegerClass));
+    addClass(shared_ptr<Class>(new LongClass));
+    addClass(shared_ptr<Class>(new StringClass));
+    addClass(shared_ptr<Class>(new AnyURIClass));
 
     string outputDir = argv[1];
     vector<string> schemaNames;

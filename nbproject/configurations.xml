@@ -8,8 +8,8 @@
         <itemPath>XMLDocument.h</itemPath>
         <itemPath>XMLObject.h</itemPath>
       </logicalFolder>
+      <itemPath>BuiltInClasses.h</itemPath>
       <itemPath>Class.h</itemPath>
-      <itemPath>IntegerClass.h</itemPath>
       <itemPath>XercesString.h</itemPath>
       <itemPath>main.h</itemPath>
     </logicalFolder>
@@ -24,8 +24,8 @@
         <itemPath>XMLDocument.cpp</itemPath>
         <itemPath>XMLObject.cpp</itemPath>
       </logicalFolder>
+      <itemPath>BuiltInClasses.cpp</itemPath>
       <itemPath>Class.cpp</itemPath>
-      <itemPath>IntegerClass.cpp</itemPath>
       <itemPath>XercesString.cpp</itemPath>
       <itemPath>main.cpp</itemPath>
     </logicalFolder>

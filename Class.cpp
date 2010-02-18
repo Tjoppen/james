@@ -68,7 +68,7 @@ string Class::generateAppender() const {
             oss << "for(" << it->second.getType() << "::const_iterator it = " << name << ".begin(); it != " << name << ".end(); it++) {" << endl;
         } else if(!it->second.isRequired()) {
             //insert a non-null check
-            oss << "if(" << name << ") {" << endl;
+            oss << "if(" << it->second.cl->getTester(name) << ") {" << endl;
         } else {
             //required member - check for its existance
         }
@@ -197,7 +197,7 @@ void Class::writeImplementation(ostream& os) const {
     //give all basic optional members a default value of zero
     for(map<string, Member>::const_iterator it = members.begin(); it != members.end(); it++)
         if(!it->second.isArray() && !it->second.isRequired() && it->second.cl->isSimple())
-            os << it->first << " = 0;" << endl;
+            os << it->first << " = " << it->second.cl->getDefaultValue() << ";" << endl;
 
     os << "}" << endl << endl;
 
@@ -288,4 +288,18 @@ string Class::Member::getType() const {
         return "std::vector<" + cl->getClassType() + " >";
     } else
         return cl->getClassType();
+}
+
+string Class::getDefaultValue() const {
+    if(isSimple() && base)
+        return base->getDefaultValue();
+    
+    return "boost::shared_ptr<" + name.second + ">()";
+}
+
+string Class::getTester(string name) const {
+    if(isSimple() && base)
+        return base->getTester(name);
+
+    return name;
 }

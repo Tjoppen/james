@@ -1,5 +1,5 @@
 /* 
- * File:   IntegerClass.cpp
+ * File:   BuiltInClasses.cpp
  * Author: tjoppen
  * 
  * Created on February 14, 2010, 6:48 PM
@@ -7,26 +7,26 @@
 
 #include <stdexcept>
 #include <sstream>
-#include "IntegerClass.h"
+#include "BuiltInClasses.h"
 #include "main.h"
 
 using namespace std;
 
-IntegerClass::IntegerClass() : Class(FullName(XSL, "int"), Class::SIMPLE_TYPE) {
+BuiltInClass::BuiltInClass(string name) : Class(FullName(XSL, name), Class::SIMPLE_TYPE) {
 }
 
-IntegerClass::~IntegerClass() {
+BuiltInClass::~BuiltInClass() {
 }
 
-bool IntegerClass::isBuiltIn() const {
+bool BuiltInClass::isBuiltIn() const {
     return true;
 }
 
-string IntegerClass::generateAppender() const {
-    throw runtime_error("generateAppender() called in IntegerClass");
+string BuiltInClass::generateAppender() const {
+    throw runtime_error("generateAppender() called in BuiltInClass");
 }
 
-string IntegerClass::generateNodeSetter(string memberName, string nodeName) const {
+string BuiltInClass::generateNodeSetter(string memberName, string nodeName) const {
     ostringstream oss;
 
     oss << "{" << endl;
@@ -40,11 +40,11 @@ string IntegerClass::generateNodeSetter(string memberName, string nodeName) cons
     return oss.str();
 }
 
-string IntegerClass::generateParser() const {
-    throw runtime_error("generateParser() called in IntegerClass");
+string BuiltInClass::generateParser() const {
+    throw runtime_error("generateParser() called in BuiltInClass");
 }
 
-string IntegerClass::generateMemberSetter(string memberName, string nodeName) const {
+string BuiltInClass::generateMemberSetter(string memberName, string nodeName) const {
     ostringstream oss;
 
     oss << "{" << endl;
@@ -54,8 +54,4 @@ string IntegerClass::generateMemberSetter(string memberName, string nodeName) co
     oss << "}" << endl;
 
     return oss.str();
-}
-
-string IntegerClass::getClassname() const {
-    return "int";
 }
