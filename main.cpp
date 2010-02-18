@@ -289,7 +289,8 @@ int main(int argc, char** argv) {
     nsLUT["xs"] = XSL;
     nsLUT["xsl"] = XSL;
     nsLUT["xsd"] = XSL;
-    
+
+    addClass(shared_ptr<Class>(new IntClass));
     addClass(shared_ptr<Class>(new IntegerClass));
     addClass(shared_ptr<Class>(new LongClass));
     addClass(shared_ptr<Class>(new StringClass));

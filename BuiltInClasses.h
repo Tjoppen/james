@@ -27,10 +27,16 @@ public:
 class name : public BuiltInClass {\
 public:\
     name() : BuiltInClass(xslName) {}\
+    name(std::string xslOverride) : BuiltInClass(xslOverride) {}\
     std::string getClassname() const {return classname;}\
     std::string getDefaultValue() const {return defaultValue;}
 
-GENERATE_BUILTIN(IntegerClass, "int", "int", "0")};
+#define GENERATE_BUILTIN_ALIAS(name, base, override)\
+class name : public base {\
+public:\
+    name() : base("anyURI") {}
+
+GENERATE_BUILTIN(IntClass, "int", "int", "0")};
 GENERATE_BUILTIN(LongClass, "long", "long", "0")};
 GENERATE_BUILTIN(StringClass, "string", "std::string", "std::string()")
     std::string getTester(std::string name) const {
@@ -38,11 +44,9 @@ GENERATE_BUILTIN(StringClass, "string", "std::string", "std::string()")
     }
 };
 
-GENERATE_BUILTIN(AnyURIClass, "anyURI", "std::string", "std::string()")
-    std::string getTester(std::string name) const {
-        return name + ".length() > 0";
-    }
-};
+//aliases
+GENERATE_BUILTIN_ALIAS(IntegerClass, IntClass, "integer")};
+GENERATE_BUILTIN_ALIAS(AnyURIClass, StringClass, "anyURI")};
 
 #endif	/* _BUILTINCLASSES_H */
 
