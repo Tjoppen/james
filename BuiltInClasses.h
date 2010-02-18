@@ -18,7 +18,7 @@ public:
     bool isBuiltIn() const;
 
     std::string generateAppender() const;
-    std::string generateNodeSetter(std::string memberName, std::string nodeName) const;
+    virtual std::string generateNodeSetter(std::string memberName, std::string nodeName) const;
     std::string generateParser() const;
     std::string generateMemberSetter(std::string memberName, std::string nodeName) const;
 };
@@ -34,11 +34,15 @@ public:\
 #define GENERATE_BUILTIN_ALIAS(name, base, override)\
 class name : public base {\
 public:\
-    name() : base("anyURI") {}
+    name() : base(override) {}
 
 GENERATE_BUILTIN(IntClass, "int", "int", "0")};
 GENERATE_BUILTIN(LongClass, "long", "long", "0")};
 GENERATE_BUILTIN(StringClass, "string", "std::string", "std::string()")
+    std::string generateNodeSetter(std::string memberName, std::string nodeName) const {
+        return nodeName + "->setTextContent(XercesString(" + memberName + "));";
+    }
+
     std::string getTester(std::string name) const {
         return name + ".length() > 0";
     }
