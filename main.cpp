@@ -113,7 +113,7 @@ static vector<DOMElement*> getChildElementsByTagName(DOMElement *parent, string 
     return ret;
 }
 
-static void parseComplexType(DOMElement *element, FullName fullName);
+static void parseComplexType(DOMElement *element, FullName fullName, shared_ptr<Class> cl = shared_ptr<Class>());
 
 static void parseSequence(DOMElement *parent, DOMElement *sequence, shared_ptr<Class> cl) {
     //we expect to see a whole bunch of <element>s here
@@ -181,13 +181,16 @@ static void parseSequence(DOMElement *parent, DOMElement *sequence, shared_ptr<C
     }
 }
 
-static void parseComplexType(DOMElement *element, FullName fullName) {
+static void parseComplexType(DOMElement *element, FullName fullName, shared_ptr<Class> cl) {
     //we handle two cases with <complexType>:
     //child is <sequence>
     //child is <complexContent> - expect grandchild <extension>
     CHECK(element);
 
-    shared_ptr<Class> cl = addClass(shared_ptr<Class>(new Class(fullName, Class::COMPLEX_TYPE)));
+    //bootstrap Class pointer in case we didn't come from the recursive <extension> call below
+    if(!cl)
+        cl = addClass(shared_ptr<Class>(new Class(fullName, Class::COMPLEX_TYPE)));
+    
     vector<DOMElement*> childElements = getChildElements(element);
 
     for(int x = 0; x < childElements.size(); x++) {
@@ -197,7 +200,18 @@ static void parseComplexType(DOMElement *element, FullName fullName) {
         if(name == "sequence") {
             parseSequence(element, child, cl);
         } else if(name == "complexContent" || name == "simpleContent") {
-            throw runtime_error("complexContent/simpleContent not currently supported");
+            DOMElement *extension = getExpectedChildElement(child, "extension");
+            
+            if(!extension->hasAttribute(X("base")))
+                throw runtime_error("Extension missing expected attribute base");
+            
+            //set base type and treat the extension as complexType itself
+            FullName base = toFullName(X(extension->getAttribute(X("base"))));
+
+            cl->baseType = base;
+            cl->hasBase = true;
+
+            parseComplexType(extension, fullName, cl);
         } else if(name == "attribute") {
             bool optional = false;
 

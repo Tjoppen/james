@@ -48,7 +48,7 @@ public:
     bool isDocument;            //true if this is a document class
 
     bool hasBase;
-    const FullName baseType;
+    FullName baseType;
     Class *base;
     
     std::map<std::string, Member> members;
