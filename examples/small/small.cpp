@@ -33,7 +33,9 @@ int main(void) {
             ect->subArray.push_back(a);
         }
 
-        ect->stringAttribute = "Hello world!";
+        ect->stringAttribute = "Hello attribute!";
+        ect->uuidAttribute = "0123456789ABCDEF0123456789ABCDEF";
+        ect->intAttribute = 1337;
 
         //marshal to stringstream
         ss << *ect << endl;

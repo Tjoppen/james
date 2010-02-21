@@ -30,6 +30,7 @@
         </xs:sequence>
         <xs:attribute name="stringAttribute" type="xs:string" use="optional"/>
         <xs:attribute name="uuidAttribute" type="tns:UUIDType" use="optional"/>
+        <xs:attribute name="intAttribute" type="xs:int" use="optional"/>
     </xs:complexType>
 
     <xs:element name="ExampleElement" type="ExampleComplexType"/>
