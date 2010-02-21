@@ -72,6 +72,19 @@ static FullName toFullName(string typeName) {
     return FullName(lookupNamespace(typeName), stripNamespace(typeName));
 }
 
+static DOMElement *getExpectedChildElement(DOMNode *parent, string childName) {
+    for(DOMNode *child = parent->getFirstChild(); child; child = child->getNextSibling()) {
+        if(child->getNodeType() == DOMNode::ELEMENT_NODE && child->getLocalName() && X(child->getLocalName()) == childName) {
+            DOMElement *childElement = dynamic_cast<DOMElement*>(child);
+            CHECK(childElement);
+
+            return childElement;
+        }
+    }
+
+    throw runtime_error((string)X(parent->getLocalName()) + " missing expected child element " + childName);
+}
+
 static void parseComplexType(DOMElement *element, FullName fullName);
 
 static void parseSequence(DOMElement *parent, DOMElement *sequence, shared_ptr<Class> cl) {
@@ -127,15 +140,7 @@ static void parseSequence(DOMElement *parent, DOMElement *sequence, shared_ptr<C
                 FullName subName(cl->name.first, cl->name.second + "_" + (string)name);
 
                 //expect <complexType> sub-tag
-                DOMNode *child2;
-                for(child2 = child->getFirstChild(); child2; child2 = child2->getNextSibling())
-                    if(child2->getNodeType() == DOMNode::ELEMENT_NODE && child2->getLocalName() && X(child2->getLocalName()) == "complexType") {
-                        parseComplexType(dynamic_cast<DOMElement*>(child2), subName);
-                        break;
-                    }
-
-                if(!child2)
-                    throw runtime_error("Missing <complexType> in anonymous type in " + cl->name.second);
+                parseComplexType(getExpectedChildElement(child, "complexType"), subName);
 
                 Class::Member info;
                 info.type = subName;
