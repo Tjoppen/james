@@ -26,7 +26,7 @@ string BuiltInClass::generateAppender() const {
     throw runtime_error("generateAppender() called in BuiltInClass");
 }
 
-string BuiltInClass::generateNodeSetter(string memberName, string nodeName) const {
+string BuiltInClass::generateElementSetter(string memberName, string nodeName) const {
     ostringstream oss;
 
     oss << "{" << endl;
@@ -35,6 +35,20 @@ string BuiltInClass::generateNodeSetter(string memberName, string nodeName) cons
     oss << "ss << " << memberName << ";" << endl;
     oss << "ss >> converted;" << endl;
     oss << nodeName << "->setTextContent(XercesString(converted));" << endl;
+    oss << "}" << endl;
+
+    return oss.str();
+}
+
+string BuiltInClass::generateAttributeSetter(string memberName, string attributeName) const {
+    ostringstream oss;
+
+    oss << "{" << endl;
+    oss << "stringstream ss;" << endl;
+    oss << "string converted;" << endl;
+    oss << "ss << " << memberName << ";" << endl;
+    oss << "ss >> converted;" << endl;
+    oss << attributeName << "->setValue(XercesString(converted));" << endl;
     oss << "}" << endl;
 
     return oss.str();
@@ -50,6 +64,18 @@ string BuiltInClass::generateMemberSetter(string memberName, string nodeName) co
     oss << "{" << endl;
     oss << "stringstream ss;" << endl;
     oss << "ss << XercesString(" << nodeName << "->getTextContent());" << endl;
+    oss << "ss >> " << memberName << ";" << endl;
+    oss << "}" << endl;
+
+    return oss.str();
+}
+
+string BuiltInClass::generateAttributeParser(string memberName, string attributeName) const {
+    ostringstream oss;
+
+    oss << "{" << endl;
+    oss << "stringstream ss;" << endl;
+    oss << "ss << XercesString(" << attributeName << "->getValue());" << endl;
     oss << "ss >> " << memberName << ";" << endl;
     oss << "}" << endl;
 

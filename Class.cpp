@@ -75,12 +75,13 @@ string Class::generateAppender() const {
 
         if(it->second.isAttribute) {
             //attribute
-            //TODO: correct implementation
-            if(!it->second.cl->isSimple())
-                throw runtime_error("Tried to generate non-simple attribute " + it->first + " in " + this->name.second);
+            oss << "DOMAttr *" << nodeName << " = node->getOwnerDocument()->createAttribute(X(\"" << name << "\"));" << endl;
+            oss << it->second.cl->generateAttributeSetter(setterName, nodeName) << endl;
+            oss << "node->setAttributeNode(" << nodeName << ");" << endl;
         } else {
+            //element
             oss << "DOMElement *" << nodeName << " = node->getOwnerDocument()->createElement(X(\"" << name << "\"));" << endl;
-            oss << it->second.cl->generateNodeSetter(setterName, nodeName) << endl;
+            oss << it->second.cl->generateElementSetter(setterName, nodeName) << endl;
             oss << "node->appendChild(" << nodeName << ");" << endl;
         }
 
@@ -93,11 +94,18 @@ string Class::generateAppender() const {
     return oss.str();
 }
 
-string Class::generateNodeSetter(string memberName, string nodeName) const {
+string Class::generateElementSetter(string memberName, string nodeName) const {
     if(isSimple() && base)
-        return base->generateNodeSetter(memberName, nodeName);
+        return base->generateElementSetter(memberName, nodeName);
 
     return memberName + "->appendChildren(" + nodeName + ");";
+}
+
+string Class::generateAttributeSetter(string memberName, string attributeName) const {
+    if(isSimple() && base)
+        return base->generateAttributeSetter(memberName, attributeName);
+
+    throw runtime_error("Tried to generateAttributeSetter() for a non-simple Class");
 }
 
 string Class::generateParser() const {
@@ -110,35 +118,48 @@ string Class::generateParser() const {
     //TODO: replace this with a map<pair<string, DOMNode::ElementType>, void(*)(DOMNode*)> thing?
     //in other words, lookin up parsing function pointers in a map should be faster then all these string comparisons
     for(std::map<std::string, Member>::const_iterator it = members.begin(); it != members.end(); it++) {
-        oss << "if(name == \"" << it->first << "\" && child->getNodeType() == DOMNode::" << (it->second.isAttribute ? "ATTRIBUTE_NODE" : "ELEMENT_NODE") << ") {" << endl;
+        if(!it->second.isAttribute) {
+            oss << "if(name == \"" << it->first << "\" && child->getNodeType() == DOMNode::ELEMENT_NODE) {" << endl;
 
-        string memberName = it->first;
-        if(it->second.isArray()) {
-            memberName = "temp";
-            oss << it->second.cl->getClassType() << " " << memberName;
+            string memberName = it->first;
+            if(it->second.isArray()) {
+                memberName = "temp";
+                oss << it->second.cl->getClassType() << " " << memberName;
 
-            if(it->second.cl->isSimple()) {
-                //for simple types we're done
-                oss << ";" << endl;
-            } else {
-                //for non-basic types we need to set the contents of the shared_ptr
-                oss << "(new " << it->second.cl->getClassname() << ");" << endl;
+                if(it->second.cl->isSimple()) {
+                    //for simple types we're done
+                    oss << ";" << endl;
+                } else {
+                    //for non-basic types we need to set the contents of the shared_ptr
+                    oss << "(new " << it->second.cl->getClassname() << ");" << endl;
+                }
+            } else if(!it->second.cl->isSimple()) {
+                //add check and allocation of shared_ptr
+                oss << "if(!" << memberName << ") " << memberName << " = boost::shared_ptr<" << it->second.cl->getClassname() << ">(new " << it->second.cl->getClassname() << ");" << endl;
             }
-        } else if(!it->second.cl->isSimple()) {
-            //add check and allocation of shared_ptr
-            oss << "if(!" << memberName << ") " << memberName << " = boost::shared_ptr<" << it->second.cl->getClassname() << ">(new " << it->second.cl->getClassname() << ");" << endl;
+
+            oss << "DOMElement *childElement = dynamic_cast<DOMElement*>(child);" << endl;
+            oss << it->second.cl->generateMemberSetter(memberName, "childElement");
+
+            if(it->second.isArray()) {
+                oss << it->first << ".push_back(" << memberName << ");" << endl;
+            }
+
+            oss << "}" << endl;
         }
-
-        oss << it->second.cl->generateMemberSetter(memberName, "child");
-
-        if(it->second.isArray()) {
-            oss << it->first << ".push_back(" << memberName << ");" << endl;
-        }
-
-        oss << "}" << endl;
     }
 
     oss << "}" << endl;
+
+    //attributes
+    for(std::map<std::string, Member>::const_iterator it = members.begin(); it != members.end(); it++) {
+        if(it->second.isAttribute) {
+            oss << "if(node->hasAttribute(X(\"" << it->first << "\"))) {" << endl;
+            oss << "DOMAttr *attributeNode = node->getAttributeNode(X(\"" << it->first << "\"));" << endl;
+            oss << it->second.cl->generateAttributeParser(it->first, "attributeNode") << endl;
+            oss << "}" << endl;
+        }
+    }
 
     return oss.str();
 }
@@ -152,6 +173,13 @@ string Class::generateMemberSetter(string memberName, string nodeName) const {
     oss << memberName << "->parseNode(" << nodeName << ");" << endl;
 
     return oss.str();
+}
+
+string Class::generateAttributeParser(string memberName, string attributeName) const {
+    if(isSimple() && base)
+        return base->generateAttributeParser(memberName, attributeName);
+
+    throw runtime_error("Tried to generateAttributeParser() for a non-simple Class");
 }
 
 string Class::getClassname() const {
@@ -215,7 +243,7 @@ void Class::writeImplementation(ostream& os) const {
         os << "return \"" << className << "\";" << endl;
         os << "}" << endl;
     } else {
-        os << "void " << className << "::appendChildren(xercesc::DOMNode *node) const {" << endl;
+        os << "void " << className << "::appendChildren(xercesc::DOMElement *node) const {" << endl;
         
         //call base appender
         if(hasBase)
@@ -224,7 +252,7 @@ void Class::writeImplementation(ostream& os) const {
         os << generateAppender() << endl;
         os << "}" << endl << endl;
 
-        os << "void " << className << "::parseNode(xercesc::DOMNode *node) {" << endl;
+        os << "void " << className << "::parseNode(xercesc::DOMElement *node) {" << endl;
         os << generateParser() << endl;
         os << "}" << endl << endl;
     }
@@ -267,8 +295,8 @@ void Class::writeHeader(ostream& os) const {
         if(isDocument)
             os << "std::string getName() const;" << endl;
         else {
-            os << "virtual void appendChildren(xercesc::DOMNode *node) const;" << endl;
-            os << "virtual void parseNode(xercesc::DOMNode *node);" << endl;
+            os << "virtual void appendChildren(xercesc::DOMElement *node) const;" << endl;
+            os << "virtual void parseNode(xercesc::DOMElement *node);" << endl;
         }
 
         //members

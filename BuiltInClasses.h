@@ -18,9 +18,11 @@ public:
     bool isBuiltIn() const;
 
     std::string generateAppender() const;
-    virtual std::string generateNodeSetter(std::string memberName, std::string nodeName) const;
+    virtual std::string generateElementSetter(std::string memberName, std::string nodeName) const;
+    virtual std::string generateAttributeSetter(std::string memberName, std::string attributeName) const;
     std::string generateParser() const;
-    std::string generateMemberSetter(std::string memberName, std::string nodeName) const;
+    virtual std::string generateMemberSetter(std::string memberName, std::string nodeName) const;
+    virtual std::string generateAttributeParser(std::string memberName, std::string attributeName) const;
 };
 
 #define GENERATE_BUILTIN(name, xslName, classname, defaultValue)\
@@ -39,12 +41,20 @@ public:\
 GENERATE_BUILTIN(IntClass, "int", "int", "0")};
 GENERATE_BUILTIN(LongClass, "long", "long", "0")};
 GENERATE_BUILTIN(StringClass, "string", "std::string", "std::string()")
-    std::string generateNodeSetter(std::string memberName, std::string nodeName) const {
+    std::string generateElementSetter(std::string memberName, std::string nodeName) const {
         return nodeName + "->setTextContent(XercesString(" + memberName + "));";
+    }
+
+    std::string generateAttributeSetter(std::string memberName, std::string attributeName) const {
+        return attributeName + "->setValue(XercesString(" + memberName + "));";
     }
 
     std::string generateMemberSetter(std::string memberName, std::string nodeName) const {
         return memberName + " = XercesString(" + nodeName + "->getTextContent());";
+    }
+
+    std::string generateAttributeParser(std::string memberName, std::string attributeName) const {
+        return memberName + " = XercesString(" + attributeName + "->getValue());";
     }
 
     std::string getTester(std::string name) const {
