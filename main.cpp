@@ -85,72 +85,100 @@ static DOMElement *getExpectedChildElement(DOMNode *parent, string childName) {
     throw runtime_error((string)X(parent->getLocalName()) + " missing expected child element " + childName);
 }
 
+static vector<DOMElement*> getChildElements(DOMElement *parent) {
+    vector<DOMElement*> ret;
+    
+    for(DOMNode *child = parent->getFirstChild(); child; child = child->getNextSibling()) {
+        if(child->getNodeType() == DOMNode::ELEMENT_NODE) {
+            DOMElement *childElement = dynamic_cast<DOMElement*>(child);
+            CHECK(childElement);
+
+            ret.push_back(childElement);
+        }
+    }
+
+    return ret;
+}
+
+static vector<DOMElement*> getChildElementsByTagName(DOMElement *parent, string childName) {
+    vector<DOMElement*> childElements = getChildElements(parent);
+    vector<DOMElement*> ret;
+
+    for(int x = 0; x < childElements.size(); x++) {
+        if(childElements[x]->getLocalName() && X(childElements[x]->getLocalName()) == childName) {
+            ret.push_back(childElements[x]);
+        }
+    }
+
+    return ret;
+}
+
 static void parseComplexType(DOMElement *element, FullName fullName);
 
 static void parseSequence(DOMElement *parent, DOMElement *sequence, shared_ptr<Class> cl) {
     //we expect to see a whole bunch of <element>s here
     CHECK(parent);
     CHECK(sequence);
+
+    vector<DOMElement*> children = getChildElementsByTagName(sequence, "element");
     
-    for(DOMNode *child = sequence->getFirstChild(); child; child = child->getNextSibling())
-        if(child->getNodeType() == DOMNode::ELEMENT_NODE && X(child->getLocalName()) == "element") {
-            DOMElement *childElement = dynamic_cast<DOMElement*>(child);
-            CHECK(childElement);
+    for(int x = 0; x < children.size(); x++) {
+        DOMElement *child = children[x];
+            
+        int minOccurs = 1;
+        int maxOccurs = 1;
 
-            int minOccurs = 1;
-            int maxOccurs = 1;
+        XercesString typeStr("type");
+        XercesString minOccursStr("minOccurs");
+        XercesString maxOccursStr("maxOccurs");
+        XercesString name = child->getAttribute(X("name"));
 
-            XercesString typeStr("type");
-            XercesString minOccursStr("minOccurs");
-            XercesString maxOccursStr("maxOccurs");
-            XercesString name = childElement->getAttribute(X("name"));
+        if(child->hasAttribute(minOccursStr)) {
+            stringstream ss;
+            ss << X(child->getAttribute(minOccursStr));
+            ss >> minOccurs;
+        }
 
-            if(childElement->hasAttribute(minOccursStr)) {
+        if(child->hasAttribute(maxOccursStr)) {
+            XercesString str(child->getAttribute(maxOccursStr));
+
+            if(str == "unbounded")
+                maxOccurs = UNBOUNDED;
+            else {
                 stringstream ss;
-                ss << X(childElement->getAttribute(minOccursStr));
-                ss >> minOccurs;
-            }
-
-            if(childElement->hasAttribute(maxOccursStr)) {
-                XercesString str(childElement->getAttribute(maxOccursStr));
-
-                if(str == "unbounded")
-                    maxOccurs = UNBOUNDED;
-                else {
-                    stringstream ss;
-                    ss << str;
-                    ss >> maxOccurs;
-                }
-            }
-
-            if(childElement->hasAttribute(typeStr)) {
-                //has type == end point - add as member of cl
-                Class::Member info;
-                
-                //assume in same namespace for now
-                info.type = toFullName(X(childElement->getAttribute(typeStr)));
-                info.minOccurs = minOccurs;
-                info.maxOccurs = maxOccurs;
-                info.isAttribute = false;
-
-                cl->addMember(name, info);
-            } else {
-                //no type - anonymous subtype
-                //generate name
-                FullName subName(cl->name.first, cl->name.second + "_" + (string)name);
-
-                //expect <complexType> sub-tag
-                parseComplexType(getExpectedChildElement(child, "complexType"), subName);
-
-                Class::Member info;
-                info.type = subName;
-                info.minOccurs = minOccurs;
-                info.maxOccurs = maxOccurs;
-                info.isAttribute = false;
-
-                cl->addMember(name, info);
+                ss << str;
+                ss >> maxOccurs;
             }
         }
+
+        if(child->hasAttribute(typeStr)) {
+            //has type == end point - add as member of cl
+            Class::Member info;
+
+            //assume in same namespace for now
+            info.type = toFullName(X(child->getAttribute(typeStr)));
+            info.minOccurs = minOccurs;
+            info.maxOccurs = maxOccurs;
+            info.isAttribute = false;
+
+            cl->addMember(name, info);
+        } else {
+            //no type - anonymous subtype
+            //generate name
+            FullName subName(cl->name.first, cl->name.second + "_" + (string)name);
+
+            //expect <complexType> sub-tag
+            parseComplexType(getExpectedChildElement(child, "complexType"), subName);
+
+            Class::Member info;
+            info.type = subName;
+            info.minOccurs = minOccurs;
+            info.maxOccurs = maxOccurs;
+            info.isAttribute = false;
+
+            cl->addMember(name, info);
+        }
+    }
 }
 
 static void parseComplexType(DOMElement *element, FullName fullName) {
@@ -160,45 +188,42 @@ static void parseComplexType(DOMElement *element, FullName fullName) {
     CHECK(element);
 
     shared_ptr<Class> cl = addClass(shared_ptr<Class>(new Class(fullName, Class::COMPLEX_TYPE)));
+    vector<DOMElement*> childElements = getChildElements(element);
 
-    for(DOMNode *child = element->getFirstChild(); child; child = child->getNextSibling()) {
-        if(child->getNodeType() == DOMNode::ELEMENT_NODE) {
-            DOMElement *childElement = dynamic_cast<DOMElement*>(child);
-            CHECK(childElement);
+    for(int x = 0; x < childElements.size(); x++) {
+        DOMElement *child = childElements[x];
+        XercesString name(child->getLocalName());
 
-            XercesString name(child->getLocalName());
+        if(name == "sequence") {
+            parseSequence(element, child, cl);
+        } else if(name == "complexContent" || name == "simpleContent") {
+            throw runtime_error("complexContent/simpleContent not currently supported");
+        } else if(name == "attribute") {
+            bool optional = false;
 
-            if(name == "sequence") {
-                parseSequence(element, childElement, cl);
-            } else if(name == "complexContent" || name == "simpleContent") {
-                throw runtime_error("complexContent/simpleContent not currently supported");
-            } else if(name == "attribute") {
-                bool optional = false;
+            if(!child->hasAttribute(X("type")))
+                throw runtime_error("<attribute> missing expected attribute 'type'");
 
-                if(!childElement->hasAttribute(X("type")))
-                    throw runtime_error("<attribute> missing expected attribute 'type'");
+            if(!child->hasAttribute(X("name")))
+                throw runtime_error("<attribute> missing expected attribute 'name'");
 
-                if(!childElement->hasAttribute(X("name")))
-                    throw runtime_error("<attribute> missing expected attribute 'name'");
+            XercesString attributeName = child->getAttribute(X("name"));
 
-                XercesString attributeName = childElement->getAttribute(X("name"));
+            FullName type = toFullName(X(child->getAttribute(X("type"))));
 
-                FullName type = toFullName(X(childElement->getAttribute(X("type"))));
+            //check for optional use
+            if(child->hasAttribute(X("use")) && X(child->getAttribute(X("use"))) == "optional")
+                optional = true;
 
-                //check for optional use
-                if(childElement->hasAttribute(X("use")) && X(childElement->getAttribute(X("use"))) == "optional")
-                    optional = true;
+            Class::Member info;
+            info.type = type;
+            info.isAttribute = true;
+            info.minOccurs = optional ? 0 : 1;
+            info.maxOccurs = 1;
 
-                Class::Member info;
-                info.type = type;
-                info.isAttribute = true;
-                info.minOccurs = optional ? 0 : 1;
-                info.maxOccurs = 1;
-
-                cl->addMember(attributeName, info);
-            } else {
-                throw runtime_error("Unknown complexType child of type " + (string)name);
-            }
+            cl->addMember(attributeName, info);
+        } else {
+            throw runtime_error("Unknown complexType child of type " + (string)name);
         }
     }
 }
@@ -207,23 +232,16 @@ static void parseSimpleType(DOMElement *element, FullName fullName) {
     //expect a <restriction> child element
     CHECK(element);
 
-    for(DOMNode *child = element->getFirstChild(); child; child = child->getNextSibling())
-        if(child->getNodeType() == DOMNode::ELEMENT_NODE && child->getLocalName() && X(child->getLocalName()) == "restriction") {
-            DOMElement *childElement = dynamic_cast<DOMElement*>(child);
-            CHECK(childElement);
+    DOMElement *restriction = getExpectedChildElement(element, "restriction");
 
-            if(!childElement->hasAttribute(X("base")))
-                throw runtime_error("simpleType restriction lacks expected attribute 'base'");
+    if(!restriction->hasAttribute(X("base")))
+        throw runtime_error("simpleType restriction lacks expected attribute 'base'");
 
-            //convert xs:string and the like to their respective FullName
-            FullName baseName = toFullName(X(childElement->getAttribute(X("base"))));
+    //convert xs:string and the like to their respective FullName
+    FullName baseName = toFullName(X(restriction->getAttribute(X("base"))));
 
-            //add class and return
-            addClass(shared_ptr<Class>(new Class(fullName, Class::SIMPLE_TYPE, baseName)));
-            return;
-        }
-
-    throw runtime_error("simpleType expected restriction");
+    //add class and return
+    addClass(shared_ptr<Class>(new Class(fullName, Class::SIMPLE_TYPE, baseName)));
 }
 
 static void parseElement(DOMElement *element, string tns) {
@@ -282,9 +300,10 @@ static void work(string outputDir, const vector<string>& schemaNames) {
         
         cout << "Target namespace: " << tns << endl;
 
-        for(DOMNode *child = root->getFirstChild(); child; child = child->getNextSibling())
-            if(child->getNodeType() == DOMNode::ELEMENT_NODE)
-                parseElement(dynamic_cast<DOMElement*>(child), tns);
+        vector<DOMElement*> elements = getChildElements(root);
+
+        for(int x = 0; x < elements.size(); x++)
+            parseElement(elements[x], tns);
     }
 
     cout << "About to make second pass. Pointing class members to referenced classes, or failing if any undefined classes are encountered." << endl;
