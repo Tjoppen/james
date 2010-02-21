@@ -259,8 +259,8 @@ void Class::writeHeader(ostream& os) const {
         if(isDocument)
             os << "std::string getName() const;" << endl;
         else {
-            os << "void appendChildren(xercesc::DOMNode *node) const;" << endl;
-            os << "void parseNode(xercesc::DOMNode *node);" << endl;
+            os << "virtual void appendChildren(xercesc::DOMNode *node) const;" << endl;
+            os << "virtual void parseNode(xercesc::DOMNode *node);" << endl;
         }
 
         //members
