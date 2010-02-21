@@ -33,5 +33,17 @@
         <xs:attribute name="intAttribute" type="xs:int" use="optional"/>
     </xs:complexType>
 
+    <xs:complexType name="ExampleComplexType2">
+        <xs:complexContent>
+            <xs:extension base="tns:ExampleComplexType">
+                <xs:sequence>
+                    <xs:element name="extensionInt" type="xs:int"/>
+                </xs:sequence>
+                <xs:attribute name="extensionAttribute" type="xs:string"/>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
     <xs:element name="ExampleElement" type="ExampleComplexType"/>
+    <xs:element name="ExampleElement2" type="ExampleComplexType2"/>
 </xs:schema>

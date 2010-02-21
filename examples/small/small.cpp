@@ -1,4 +1,4 @@
-#include "ExampleElement.h"
+#include "ExampleElement2.h"
 #include "ExampleComplexType_subType.h"
 #include <xercesc/util/PlatformUtils.hpp>
 #include <iostream>
@@ -15,7 +15,7 @@ int main(void) {
 
     {
         //create ExampleElement, populate with ints and shared_ptrs to other objects of the same type
-        boost::shared_ptr<ExampleElement> ect(new ExampleElement);
+        boost::shared_ptr<ExampleElement2> ect(new ExampleElement2);
 
         ect->requiredInteger = 1;
         ect->optionalInteger = 10;
@@ -37,6 +37,9 @@ int main(void) {
         ect->uuidAttribute = "0123456789ABCDEF0123456789ABCDEF";
         ect->intAttribute = 1337;
 
+        ect->extensionInt = 15;
+        ect->extensionAttribute = "Hello extension!";
+
         //marshal to stringstream
         ss << *ect << endl;
     }
@@ -45,7 +48,7 @@ int main(void) {
     cout << ss.str() << endl;
 
     {
-        boost::shared_ptr<ExampleElement> ect(new ExampleElement);
+        boost::shared_ptr<ExampleElement2> ect(new ExampleElement2);
 
         //unmarshal to new ExampleElement
         ss >> *ect;
