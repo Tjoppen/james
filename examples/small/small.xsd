@@ -1,5 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="http://example.com/" elementFormDefault="qualified" xmlns="http://example.com/">
+    <xs:simpleType name="UUIDType2">
+        <xs:restriction base="tns:UUIDType">
+            <xs:pattern value="[0-9a-fA-F]{32}"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="UUIDType">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[0-9a-fA-F]{32}"/>
+        </xs:restriction>
+    </xs:simpleType>
+
     <xs:complexType name="ExampleComplexType">
         <xs:sequence>
             <xs:element name="requiredInteger" type="xs:int"/>
@@ -14,7 +26,10 @@
                     </xs:sequence>
                 </xs:complexType>
             </xs:element>
+            <xs:element name="uuid" type="tns:UUIDType2" minOccurs="0"/>
         </xs:sequence>
+        <xs:attribute name="stringAttribute" type="xs:string" use="optional"/>
+        <xs:attribute name="uuidAttribute" type="tns:UUIDType" use="optional"/>
     </xs:complexType>
 
     <xs:element name="ExampleElement" type="ExampleComplexType"/>

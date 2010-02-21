@@ -33,6 +33,8 @@ int main(void) {
             ect->subArray.push_back(a);
         }
 
+        ect->stringAttribute = "Hello world!";
+
         //marshal to stringstream
         ss << *ect << endl;
     }
