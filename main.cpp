@@ -154,17 +154,43 @@ static void parseComplexType(DOMElement *element, FullName fullName) {
     //child is <complexContent> - expect grandchild <extension>
     CHECK(element);
 
+    shared_ptr<Class> cl = addClass(shared_ptr<Class>(new Class(fullName, Class::COMPLEX_TYPE)));
+
     for(DOMNode *child = element->getFirstChild(); child; child = child->getNextSibling()) {
         if(child->getNodeType() == DOMNode::ELEMENT_NODE) {
+            DOMElement *childElement = dynamic_cast<DOMElement*>(child);
+            CHECK(childElement);
+
             XercesString name(child->getLocalName());
 
             if(name == "sequence") {
-                //TODO: Add new Class based on the name of element
-                shared_ptr<Class> cl = addClass(shared_ptr<Class>(new Class(fullName, Class::COMPLEX_TYPE)));
+                parseSequence(element, childElement, cl);
+            } else if(name == "complexContent" || name == "simpleContent") {
+                throw runtime_error("complexContent/simpleContent not currently supported");
+            } else if(name == "attribute") {
+                bool optional = false;
 
-                parseSequence(element, dynamic_cast<DOMElement*>(child), cl);
-            } else if(name == "complexContent") {
-                throw runtime_error("complexContent not currently supported");
+                if(!childElement->hasAttribute(X("type")))
+                    throw runtime_error("<attribute> missing expected attribute 'type'");
+
+                if(!childElement->hasAttribute(X("name")))
+                    throw runtime_error("<attribute> missing expected attribute 'name'");
+
+                XercesString attributeName = childElement->getAttribute(X("name"));
+
+                FullName type = toFullName(X(childElement->getAttribute(X("type"))));
+
+                //check for optional use
+                if(childElement->hasAttribute(X("use")) && X(childElement->getAttribute(X("use"))) == "optional")
+                    optional = true;
+
+                Class::Member info;
+                info.type = type;
+                info.isAttribute = true;
+                info.minOccurs = optional ? 0 : 1;
+                info.maxOccurs = 1;
+
+                cl->addMember(attributeName, info);
             } else {
                 throw runtime_error("Unknown complexType child of type " + (string)name);
             }

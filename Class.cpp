@@ -73,9 +73,16 @@ string Class::generateAppender() const {
             //required member - check for its existance
         }
 
-        oss << "DOMElement *" << nodeName << " = node->getOwnerDocument()->createElement(X(\"" << name << "\"));" << endl;
-        oss << it->second.cl->generateNodeSetter(setterName, nodeName) << endl;
-        oss << "node->appendChild(" << nodeName << ");" << endl;
+        if(it->second.isAttribute) {
+            //attribute
+            //TODO: correct implementation
+            if(!it->second.cl->isSimple())
+                throw runtime_error("Tried to generate non-simple attribute " + it->first + " in " + this->name.second);
+        } else {
+            oss << "DOMElement *" << nodeName << " = node->getOwnerDocument()->createElement(X(\"" << name << "\"));" << endl;
+            oss << it->second.cl->generateNodeSetter(setterName, nodeName) << endl;
+            oss << "node->appendChild(" << nodeName << ");" << endl;
+        }
 
         if(it->second.isArray() || !it->second.isRequired())
             oss << "}" << endl;
@@ -176,6 +183,7 @@ void Class::writeImplementation(ostream& os) const {
     os << "#include <sstream>" << endl;
     os << "#include <xercesc/dom/DOMDocument.hpp>" << endl;
     os << "#include <xercesc/dom/DOMElement.hpp>" << endl;
+    os << "#include <xercesc/dom/DOMAttr.hpp>" << endl;
     os << "#include \"XercesString.h\"" << endl;
     os << "#include \"" << className << ".h\"" << endl;
 
