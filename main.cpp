@@ -49,6 +49,25 @@ static shared_ptr<Class> addClass(shared_ptr<Class> cl) {
     return classes[cl->name] = cl;
 }
 
+static string fixIdentifier(string str) {
+    //strip any bad characters such as dots, colons, semicolons..
+    string ret;
+
+    for(int x = 0; x < str.size(); x++) {
+        char c = str[x];
+
+        if((c >= 'a' && c <= 'z') ||
+                (c >= '0' && c <= '9') ||
+                (c >= 'A' && c <= 'Z') ||
+                c == '_')
+            ret += c;
+        else
+            ret += "_";
+    }
+
+    return ret;
+}
+
 static string lookupNamespace(string typeName, string defaultNamespace) {
     //figures out namespace URI of given type
     size_t pos = typeName.find_last_of(':');
@@ -135,7 +154,7 @@ static void parseSequence(DOMElement *parent, DOMElement *sequence, shared_ptr<C
         XercesString typeStr("type");
         XercesString minOccursStr("minOccurs");
         XercesString maxOccursStr("maxOccurs");
-        XercesString name = child->getAttribute(X("name"));
+        string name = fixIdentifier(X(child->getAttribute(X("name"))));
 
         if(child->hasAttribute(minOccursStr)) {
             stringstream ss;
@@ -239,7 +258,7 @@ static void parseComplexType(DOMElement *element, FullName fullName, shared_ptr<
             if(!child->hasAttribute(X("name")))
                 throw runtime_error("<attribute> missing expected attribute 'name'");
 
-            XercesString attributeName = child->getAttribute(X("name"));
+            string attributeName = fixIdentifier(X(child->getAttribute(X("name"))));
 
             FullName type = toFullName(X(child->getAttribute(X("type"))));
 
