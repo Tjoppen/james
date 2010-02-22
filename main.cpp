@@ -295,15 +295,18 @@ static void parseElement(DOMElement *element, string tns) {
     if(nodeName == "complexType")
         parseComplexType(element, fullName);
     else if(nodeName == "element") {
-        //return; //ignore element for now
-        if(!element->hasAttribute(X("type")))
-            throw runtime_error("Missing type on <element>");
+        //if <element> is missing type, then its type is anonymous
+        FullName type;
 
-        XercesString type(element->getAttribute(X("type")));
+        if(!element->hasAttribute(X("type"))) {
+            //anonymous element type. derive it using expected <complexType>
+            type = FullName(tns, fullName.second + "Type");
 
-        cout << name << " of type " << type << endl;
+            parseComplexType(getExpectedChildElement(element, "complexType"), type);
+        } else
+            type = FullName(tns, X(element->getAttribute(X("type"))));
 
-        addClass(shared_ptr<Class>(new Class(fullName, Class::COMPLEX_TYPE, FullName(tns, type))))->isDocument = true;
+        addClass(shared_ptr<Class>(new Class(fullName, Class::COMPLEX_TYPE, type)))->isDocument = true;
     } else if(nodeName == "simpleType") {
         parseSimpleType(element, fullName);
     }
