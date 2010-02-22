@@ -304,7 +304,7 @@ static void parseElement(DOMElement *element, string tns) {
 
             parseComplexType(getExpectedChildElement(element, "complexType"), type);
         } else
-            type = FullName(tns, X(element->getAttribute(X("type"))));
+            type = toFullName(X(element->getAttribute(X("type"))));
 
         addClass(shared_ptr<Class>(new Class(fullName, Class::COMPLEX_TYPE, type)))->isDocument = true;
     } else if(nodeName == "simpleType") {
