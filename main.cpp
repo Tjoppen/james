@@ -377,6 +377,11 @@ int main(int argc, char** argv) {
     addClass(shared_ptr<Class>(new LongClass));
     addClass(shared_ptr<Class>(new StringClass));
     addClass(shared_ptr<Class>(new AnyURIClass));
+    addClass(shared_ptr<Class>(new FloatClass));
+    addClass(shared_ptr<Class>(new DoubleClass));
+    addClass(shared_ptr<Class>(new TimeClass));
+    addClass(shared_ptr<Class>(new DateClass));
+    addClass(shared_ptr<Class>(new DateTimeClass));
 
     string outputDir = argv[1];
     vector<string> schemaNames;

@@ -61,10 +61,15 @@ GENERATE_BUILTIN(StringClass, "string", "std::string", "std::string()")
         return name + ".length() > 0";
     }
 };
+GENERATE_BUILTIN(FloatClass, "float", "float", "0")};
+GENERATE_BUILTIN(DoubleClass, "double", "double", "0")};
 
 //aliases
 GENERATE_BUILTIN_ALIAS(IntegerClass, IntClass, "integer")};
 GENERATE_BUILTIN_ALIAS(AnyURIClass, StringClass, "anyURI")};
+GENERATE_BUILTIN_ALIAS(TimeClass, StringClass, "time")};
+GENERATE_BUILTIN_ALIAS(DateClass, StringClass, "date")};
+GENERATE_BUILTIN_ALIAS(DateTimeClass, StringClass, "dateTime")};
 
 #endif	/* _BUILTINCLASSES_H */
 
