@@ -115,8 +115,9 @@ static vector<DOMElement*> getChildElementsByTagName(DOMElement *parent, string 
 
 static void parseComplexType(DOMElement *element, FullName fullName, shared_ptr<Class> cl = shared_ptr<Class>());
 
-static void parseSequence(DOMElement *parent, DOMElement *sequence, shared_ptr<Class> cl) {
+static void parseSequence(DOMElement *parent, DOMElement *sequence, shared_ptr<Class> cl, bool choice = false) {
     //we expect to see a whole bunch of <element>s here
+    //if choice is true then this is a choice sequence - every element is optional
     CHECK(parent);
     CHECK(sequence);
 
@@ -149,6 +150,15 @@ static void parseSequence(DOMElement *parent, DOMElement *sequence, shared_ptr<C
                 ss << str;
                 ss >> maxOccurs;
             }
+        }
+
+        //all choice elements are optional
+        if(choice) {
+            if(maxOccurs > 1)
+                throw runtime_error("maxOccurs > 1 specified for choice element");
+
+            minOccurs = 0;
+            maxOccurs = 1;
         }
 
         if(child->hasAttribute(typeStr)) {
@@ -199,6 +209,11 @@ static void parseComplexType(DOMElement *element, FullName fullName, shared_ptr<
 
         if(name == "sequence") {
             parseSequence(element, child, cl);
+        } else if(name == "choice") {
+            if(child->hasAttribute(X("minOccurs")) || child->hasAttribute(X("maxOccurs")))
+                throw runtime_error("minOccurs/maxOccurs not currently supported in choices types");
+
+            parseSequence(element, child, cl, true);
         } else if(name == "complexContent" || name == "simpleContent") {
             DOMElement *extension = getExpectedChildElement(child, "extension");
             
