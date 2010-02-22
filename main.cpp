@@ -65,6 +65,9 @@ static string fixIdentifier(string str) {
             ret += "_";
     }
 
+    if(ret == "default")
+        ret += "_";
+
     return ret;
 }
 
