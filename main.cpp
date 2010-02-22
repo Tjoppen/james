@@ -386,6 +386,7 @@ int main(int argc, char** argv) {
     addClass(shared_ptr<Class>(new DateClass));
     addClass(shared_ptr<Class>(new DateTimeClass));
     addClass(shared_ptr<Class>(new BooleanClass));
+    addClass(shared_ptr<Class>(new LanguageClass));
 
     string outputDir = argv[1];
     vector<string> schemaNames;
