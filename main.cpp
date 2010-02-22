@@ -209,9 +209,9 @@ static void parseComplexType(DOMElement *element, FullName fullName, shared_ptr<
 
         if(name == "sequence") {
             parseSequence(element, child, cl);
-        } else if(name == "choice") {
+        } else if(name == "choice" || name == "all") {
             if(child->hasAttribute(X("minOccurs")) || child->hasAttribute(X("maxOccurs")))
-                throw runtime_error("minOccurs/maxOccurs not currently supported in choices types");
+                throw runtime_error("minOccurs/maxOccurs not currently supported in <choice>/<all> types");
 
             parseSequence(element, child, cl, true);
         } else if(name == "complexContent" || name == "simpleContent") {
