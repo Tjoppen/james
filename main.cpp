@@ -49,9 +49,12 @@ static shared_ptr<Class> addClass(shared_ptr<Class> cl) {
     return classes[cl->name] = cl;
 }
 
-static string lookupNamespace(string typeName) {
+static string lookupNamespace(string typeName, string defaultNamespace) {
     //figures out namespace URI of given type
     size_t pos = typeName.find_last_of(':');
+
+    if(pos == string::npos)
+        return defaultNamespace;
 
     return nsLUT[typeName.substr(0, pos)];
 }
@@ -67,9 +70,9 @@ static string stripNamespace(string typeName) {
         return typeName.substr(pos + 1, typeName.length() - pos - 1);
 }
 
-static FullName toFullName(string typeName) {
+static FullName toFullName(string typeName, string defaultNamespace = "") {
     //looks up and strips namespace from typeName and builds a FullName of the result
-    return FullName(lookupNamespace(typeName), stripNamespace(typeName));
+    return FullName(lookupNamespace(typeName, defaultNamespace), stripNamespace(typeName));
 }
 
 static DOMElement *getExpectedChildElement(DOMNode *parent, string childName) {
@@ -304,7 +307,7 @@ static void parseElement(DOMElement *element, string tns) {
 
             parseComplexType(getExpectedChildElement(element, "complexType"), type);
         } else
-            type = toFullName(X(element->getAttribute(X("type"))));
+            type = toFullName(X(element->getAttribute(X("type"))), tns);
 
         addClass(shared_ptr<Class>(new Class(fullName, Class::COMPLEX_TYPE, type)))->isDocument = true;
     } else if(nodeName == "simpleType") {
@@ -382,6 +385,7 @@ int main(int argc, char** argv) {
     addClass(shared_ptr<Class>(new TimeClass));
     addClass(shared_ptr<Class>(new DateClass));
     addClass(shared_ptr<Class>(new DateTimeClass));
+    addClass(shared_ptr<Class>(new BooleanClass));
 
     string outputDir = argv[1];
     vector<string> schemaNames;
