@@ -46,4 +46,12 @@
 
     <xs:element name="ExampleElement" type="ExampleComplexType"/>
     <xs:element name="ExampleElement2" type="ExampleComplexType2"/>
+
+    <xs:element name="ExampleAnonymousTypeElement">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="integer" type="xs:int"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
 </xs:schema>
