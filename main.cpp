@@ -488,35 +488,37 @@ static string readIstreamToString(istream& is) {
 }
 
 /**
- * Replaces the file named by originalName with the one named by newName if they differ.
- * If not, newName is deleted.
- * The purpose of this is to avoid the original file from being marked as changed,
+ * Replaces contents of the file named by originalName with newContents if there is a difference.
+ * If not, the file is untouched.
+ * The purpose of this is to avoid the original file being marked as changed,
  * so that this tool can be incorporated into an automatic build system where only the files that did change have to be recompiled.
  */
-static void diffAndReplace(string originalName, string newName) {
-    //read contents of both file. missing files give rise to empty strings
-    ifstream originalIfs(originalName.c_str());
-    ifstream newIfs(newName.c_str());
+static void diffAndReplace(string fileName, string newContents) {
+    //read contents of the original file. missing files give rise to empty strings
+    string originalContents;
 
-    string originalStr = readIstreamToString(originalIfs);
-    string newStr = readIstreamToString(newIfs);
+    {
+        ifstream originalIfs(fileName.c_str());
 
-    if(newStr == originalStr) {
-        //no difference - remove temporary file
-        if(unlink(newName.c_str()))
-            cout << "Warning: unlink() failed, ";
+        originalContents = readIstreamToString(originalIfs);
 
+        //input file gets closed here, so that we can write to it later
+    }
+
+    if(newContents == originalContents) {
+        //no difference
         cout << "not changed" << endl;
     } else {
-        //files differ - either original does not exist or the schema changed for this type
-        if(unlink(originalName.c_str()))
+        //contents differ - either original does not exist or the schema changed for this type
+        if(unlink(fileName.c_str()))
             cout << "created" << endl;
         else
             cout << "changed" << endl;
 
-        //rename temp file to its real name
-        if(rename(newName.c_str(), originalName.c_str()))
-            throw runtime_error("Failed to rename '" + newName + "' to '" + originalName + "'");
+        //write new content
+        ofstream ofs(fileName.c_str());
+        
+        ofs << newContents;
     }
 }
 
@@ -563,31 +565,27 @@ int main(int argc, char** argv) {
         if(!it->second->isBuiltIn()) {
             if(!it->second->isSimple())
             {
-                ostringstream originalName, newName;
-                originalName << outputDir << "/" << it->first.second << ".cpp";
-                newName      << outputDir << "/" << it->first.second << ".cpp_temp";
+                ostringstream name, implementation;
+                name << outputDir << "/" << it->first.second << ".cpp";
 
-                cout << setw(60) << originalName.str() << ": ";
+                cout << setw(70) << name.str() << ": ";
 
-                ofstream ofs(newName.str().c_str());
+                //write implementation to memory, then diff against the possibly existing file
+                it->second->writeImplementation(implementation);
 
-                it->second->writeImplementation(ofs);
-
-                diffAndReplace(originalName.str(), newName.str());
+                diffAndReplace(name.str(), implementation.str());
             }
 
             {
-                ostringstream originalName, newName;
-                originalName << outputDir << "/" << it->first.second << ".h";
-                newName      << outputDir << "/" << it->first.second << ".h_temp";
+                ostringstream name, header;
+                name << outputDir << "/" << it->first.second << ".h";
 
-                cout << setw(60) << originalName.str() << ": ";
+                cout << setw(70) << name.str() << ": ";
 
-                ofstream ofs(newName.str().c_str());
+                //write header to memory, then diff against the possibly existing file
+                it->second->writeHeader(header);
 
-                it->second->writeHeader(ofs);
-
-                diffAndReplace(originalName.str(), newName.str());
+                diffAndReplace(name.str(), header.str());
             }
         }
     }
