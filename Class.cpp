@@ -111,7 +111,7 @@ string Class::generateAttributeSetter(string memberName, string attributeName) c
 string Class::generateParser() const {
     ostringstream oss;
 
-    if(base)
+    if(hasBase && !base->isSimple())
         oss << getBaseClassname() << "::parseNode(node);" << endl;
 
     oss << "for(DOMNode *child = node->getFirstChild(); child; child = child->getNextSibling()) {" << endl;
@@ -252,7 +252,7 @@ void Class::writeImplementation(ostream& os) const {
         os << "void " << className << "::appendChildren(xercesc::DOMElement *node) const {" << endl;
         
         //call base appender
-        if(hasBase)
+        if(hasBase && !base->isSimple())
             os << getBaseClassname() << "::appendChildren(node);" << endl;
 
         os << generateAppender() << endl;
