@@ -41,6 +41,10 @@ public:\
 GENERATE_BUILTIN(IntClass, "int", "int", "0")};
 GENERATE_BUILTIN(LongClass, "long", "long", "0")};
 GENERATE_BUILTIN(StringClass, "string", "std::string", "std::string()")
+    std::string getBaseHeader() const {
+            return "<string>";
+    }
+
     std::string generateElementSetter(std::string memberName, std::string nodeName) const {
         return nodeName + "->setTextContent(XercesString(" + memberName + "));";
     }

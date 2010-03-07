@@ -105,7 +105,7 @@ public:
     /**
      * Returns name of header wherein the base class is defined.
      */
-    std::string getBaseHeader() const;
+    virtual std::string getBaseHeader() const;
 
     /**
      * Returns the base member type of this class.

@@ -204,7 +204,10 @@ string Class::getBaseClassname() const {
 }
 
 string Class::getBaseHeader() const {
-    return hasBase ? base->getClassname() + ".h" : "XMLObject.h";
+    if(base && base->isSimple())
+        return base->getBaseHeader();
+    
+    return hasBase ? "\"" + base->getClassname() + ".h\"" : "\"XMLObject.h\"";
 }
 
 void Class::writeImplementation(ostream& os) const {
@@ -274,7 +277,7 @@ void Class::writeHeader(ostream& os) const {
     if(isSimple()) {
         os << "typedef " << base->getClassname() << " " << name.second << ";" << endl;
     } else {
-        os << "#include \"" << getBaseHeader() << "\"" << endl;
+        os << "#include " << getBaseHeader() << endl;
 
         if(isDocument)
             os << "#include \"XMLDocument.h\"" << endl;
