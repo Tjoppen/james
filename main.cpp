@@ -282,13 +282,14 @@ static void parseSequence(DOMElement *parent, DOMElement *sequence, shared_ptr<C
             //has type == end point - add as member of cl
             Class::Member info;
 
+            info.name = name;
             //assume in same namespace for now
             info.type = toFullName(X(child->getAttribute(typeStr)));
             info.minOccurs = minOccurs;
             info.maxOccurs = maxOccurs;
             info.isAttribute = false;
 
-            cl->addMember(name, info);
+            cl->addMember(info);
         } else {
             //no type - anonymous subtype
             //generate name
@@ -298,12 +299,13 @@ static void parseSequence(DOMElement *parent, DOMElement *sequence, shared_ptr<C
             parseComplexType(getExpectedChildElement(child, "complexType"), subName);
 
             Class::Member info;
+            info.name = name;
             info.type = subName;
             info.minOccurs = minOccurs;
             info.maxOccurs = maxOccurs;
             info.isAttribute = false;
 
-            cl->addMember(name, info);
+            cl->addMember(info);
         }
     }
 }
@@ -362,12 +364,13 @@ static void parseComplexType(DOMElement *element, FullName fullName, shared_ptr<
                 optional = true;
 
             Class::Member info;
+            info.name = attributeName;
             info.type = type;
             info.isAttribute = true;
             info.minOccurs = optional ? 0 : 1;
             info.maxOccurs = 1;
 
-            cl->addMember(attributeName, info);
+            cl->addMember(info);
         } else {
             throw runtime_error("Unknown complexType child of type " + (string)name);
         }
@@ -467,11 +470,11 @@ static void work(string outputDir, const vector<string>& schemaNames) {
             it->second->base = classes[it->second->baseType].get();
         }
 
-        for(map<string, Class::Member>::iterator it2 = it->second->members.begin(); it2 != it->second->members.end(); it2++) {
-            if(classes.find(it2->second.type) == classes.end())
-                throw runtime_error("Undefined type " + it2->second.type.first + ":" + it2->second.type.second + " in member " + it2->first + " of " + it->first.first + ":" + it->first.second);
+        for(list<Class::Member>::iterator it2 = it->second->members.begin(); it2 != it->second->members.end(); it2++) {
+            if(classes.find(it2->type) == classes.end())
+                throw runtime_error("Undefined type " + it2->type.first + ":" + it2->type.second + " in member " + it2->name + " of " + it->first.first + ":" + it->first.second);
 
-            it2->second.cl = classes[it2->second.type].get();
+            it2->cl = classes[it2->type].get();
         }
     }
 }

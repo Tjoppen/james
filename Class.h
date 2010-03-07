@@ -10,6 +10,7 @@
 
 #include <string>
 #include <map>
+#include <list>
 #include <limits.h>
 
 #define UNBOUNDED INT_MAX
@@ -22,6 +23,7 @@ class Class {
 public:
     class Member {
     public:
+        std::string name;
         FullName type;
         Class *cl;
         int minOccurs;
@@ -51,13 +53,14 @@ public:
     FullName baseType;
     Class *base;
     
-    std::map<std::string, Member> members;
+    std::list<Member> members;
 
     Class(FullName name, ClassType type);
     Class(FullName name, ClassType type, FullName baseType);
     virtual ~Class();
 
-    void addMember(std::string name, Member memberInfo);
+    std::list<Member>::iterator findMember(std::string name);
+    void addMember(Member memberInfo);
 
     /**
      * Should return a code fragment that for appending all the members of this Class.

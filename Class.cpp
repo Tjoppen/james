@@ -33,11 +33,19 @@ bool Class::isBuiltIn() const {
     return false;
 }
 
-void Class::addMember(string name, Member memberInfo) {
-    if(members.find(name) != members.end())
-        throw runtime_error("Member " + name + " defined more than once in " + this->name.second);
+std::list<Class::Member>::iterator Class::findMember(std::string name) {
+    for(std::list<Member>::iterator it = members.begin(); it != members.end(); it++)
+        if(it->name == name)
+            return it;
 
-    cout << this->name.second << " got " << memberInfo.type.first << ":" << memberInfo.type.second << " " << name << ". Occurance: ";
+    return members.end();
+}
+
+void Class::addMember(Member memberInfo) {
+    if(findMember(memberInfo.name) != members.end())
+        throw runtime_error("Member " + memberInfo.name + " defined more than once in " + this->name.second);
+
+    cout << this->name.second << " got " << memberInfo.type.first << ":" << memberInfo.type.second << " " << memberInfo.name << ". Occurance: ";
 
     if(memberInfo.maxOccurs == UNBOUNDED) {
         cout << "at least " << memberInfo.minOccurs;
@@ -49,7 +57,7 @@ void Class::addMember(string name, Member memberInfo) {
 
     cout << endl;
 
-    members[name] = memberInfo;
+    members.push_back(memberInfo);
 }
 
 /**
@@ -58,34 +66,34 @@ void Class::addMember(string name, Member memberInfo) {
 string Class::generateAppender() const {
     ostringstream oss;
     
-    for(std::map<std::string, Member>::const_iterator it = members.begin(); it != members.end(); it++) {
-        string name = it->first;
-        string setterName = it->first;
+    for(std::list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
+        string name = it->name;
+        string setterName = it->name;
         string nodeName = name + "Node";
 
-        if(it->second.isArray()) {
+        if(it->isArray()) {
             setterName = "(*it)";
-            oss << "for(" << it->second.getType() << "::const_iterator it = " << name << ".begin(); it != " << name << ".end(); it++) {" << endl;
-        } else if(!it->second.isRequired()) {
+            oss << "for(" << it->getType() << "::const_iterator it = " << name << ".begin(); it != " << name << ".end(); it++) {" << endl;
+        } else if(!it->isRequired()) {
             //insert a non-null check
-            oss << "if(" << it->second.cl->getTester(name) << ") {" << endl;
+            oss << "if(" << it->cl->getTester(name) << ") {" << endl;
         } else {
             //required member - check for its existance
         }
 
-        if(it->second.isAttribute) {
+        if(it->isAttribute) {
             //attribute
             oss << "DOMAttr *" << nodeName << " = node->getOwnerDocument()->createAttribute(X(\"" << name << "\"));" << endl;
-            oss << it->second.cl->generateAttributeSetter(setterName, nodeName) << endl;
+            oss << it->cl->generateAttributeSetter(setterName, nodeName) << endl;
             oss << "node->setAttributeNode(" << nodeName << ");" << endl;
         } else {
             //element
             oss << "DOMElement *" << nodeName << " = node->getOwnerDocument()->createElement(X(\"" << name << "\"));" << endl;
-            oss << it->second.cl->generateElementSetter(setterName, nodeName) << endl;
+            oss << it->cl->generateElementSetter(setterName, nodeName) << endl;
             oss << "node->appendChild(" << nodeName << ");" << endl;
         }
 
-        if(it->second.isArray() || !it->second.isRequired())
+        if(it->isArray() || !it->isRequired())
             oss << "}" << endl;
 
         oss << endl;
@@ -120,32 +128,32 @@ string Class::generateParser() const {
 
     //TODO: replace this with a map<pair<string, DOMNode::ElementType>, void(*)(DOMNode*)> thing?
     //in other words, lookin up parsing function pointers in a map should be faster then all these string comparisons
-    for(std::map<std::string, Member>::const_iterator it = members.begin(); it != members.end(); it++) {
-        if(!it->second.isAttribute) {
-            oss << "if(name == \"" << it->first << "\" && child->getNodeType() == DOMNode::ELEMENT_NODE) {" << endl;
+    for(std::list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
+        if(!it->isAttribute) {
+            oss << "if(name == \"" << it->name << "\" && child->getNodeType() == DOMNode::ELEMENT_NODE) {" << endl;
 
-            string memberName = it->first;
-            if(it->second.isArray()) {
+            string memberName = it->name;
+            if(it->isArray()) {
                 memberName = "temp";
-                oss << it->second.cl->getClassType() << " " << memberName;
+                oss << it->cl->getClassType() << " " << memberName;
 
-                if(it->second.cl->isSimple()) {
+                if(it->cl->isSimple()) {
                     //for simple types we're done
                     oss << ";" << endl;
                 } else {
                     //for non-basic types we need to set the contents of the shared_ptr
-                    oss << "(new " << it->second.cl->getClassname() << ");" << endl;
+                    oss << "(new " << it->cl->getClassname() << ");" << endl;
                 }
-            } else if(!it->second.cl->isSimple()) {
+            } else if(!it->cl->isSimple()) {
                 //add check and allocation of shared_ptr
-                oss << "if(!" << memberName << ") " << memberName << " = boost::shared_ptr<" << it->second.cl->getClassname() << ">(new " << it->second.cl->getClassname() << ");" << endl;
+                oss << "if(!" << memberName << ") " << memberName << " = boost::shared_ptr<" << it->cl->getClassname() << ">(new " << it->cl->getClassname() << ");" << endl;
             }
 
             oss << "DOMElement *childElement = dynamic_cast<DOMElement*>(child);" << endl;
-            oss << it->second.cl->generateMemberSetter(memberName, "childElement");
+            oss << it->cl->generateMemberSetter(memberName, "childElement");
 
-            if(it->second.isArray()) {
-                oss << it->first << ".push_back(" << memberName << ");" << endl;
+            if(it->isArray()) {
+                oss << it->name << ".push_back(" << memberName << ");" << endl;
             }
 
             oss << "}" << endl;
@@ -155,11 +163,11 @@ string Class::generateParser() const {
     oss << "}" << endl;
 
     //attributes
-    for(std::map<std::string, Member>::const_iterator it = members.begin(); it != members.end(); it++) {
-        if(it->second.isAttribute) {
-            oss << "if(node->hasAttribute(X(\"" << it->first << "\"))) {" << endl;
-            oss << "DOMAttr *attributeNode = node->getAttributeNode(X(\"" << it->first << "\"));" << endl;
-            oss << it->second.cl->generateAttributeParser(it->first, "attributeNode") << endl;
+    for(std::list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
+        if(it->isAttribute) {
+            oss << "if(node->hasAttribute(X(\"" << it->name << "\"))) {" << endl;
+            oss << "DOMAttr *attributeNode = node->getAttributeNode(X(\"" << it->name << "\"));" << endl;
+            oss << it->cl->generateAttributeParser(it->name, "attributeNode") << endl;
             oss << "}" << endl;
         }
     }
@@ -226,9 +234,9 @@ void Class::writeImplementation(ostream& os) const {
         return;
 
     //include headers of all non-basic member types that aren't us
-    for(map<string, Member>::const_iterator it = members.begin(); it != members.end(); it++)
-        if(!it->second.cl->isSimple() && it->second.cl != this)
-            os << "#include \"" << it->second.cl->name.second << ".h\"" << endl;
+    for(list<Member>::const_iterator it = members.begin(); it != members.end(); it++)
+        if(!it->cl->isSimple() && it->cl != this)
+            os << "#include \"" << it->cl->name.second << ".h\"" << endl;
 
     os << "using namespace std;" << endl;
     os << "using namespace xercesc;" << endl;
@@ -237,9 +245,9 @@ void Class::writeImplementation(ostream& os) const {
     os << className << "::" << className << "() : " << getBaseClassname() << "() {";
     
     //give all basic optional members a default value of zero
-    for(map<string, Member>::const_iterator it = members.begin(); it != members.end(); it++)
-        if(!it->second.isArray() && !it->second.isRequired() && it->second.cl->isSimple())
-            os << it->first << " = " << it->second.cl->getDefaultValue() << ";" << endl;
+    for(list<Member>::const_iterator it = members.begin(); it != members.end(); it++)
+        if(!it->isArray() && !it->isRequired() && it->cl->isSimple())
+            os << it->name << " = " << it->cl->getDefaultValue() << ";" << endl;
 
     os << "}" << endl << endl;
 
@@ -283,9 +291,9 @@ void Class::writeHeader(ostream& os) const {
             os << "#include \"XMLDocument.h\"" << endl;
 
         //non-basic member class prototypes
-        for(map<string, Member>::const_iterator it = members.begin(); it != members.end(); it++)
-            if(!it->second.cl->isSimple())
-                os << "class " << it->second.cl->getClassname() << ";" << endl;
+        for(list<Member>::const_iterator it = members.begin(); it != members.end(); it++)
+            if(!it->cl->isSimple())
+                os << "class " << it->cl->getClassname() << ";" << endl;
 
         os << "class " << className << " : public " << getBaseClassname();
 
@@ -306,8 +314,8 @@ void Class::writeHeader(ostream& os) const {
         }
 
         //members
-        for(map<string, Member>::const_iterator it = members.begin(); it != members.end(); it++) {
-            os << it->second.getType() << " " << it->first << ";" << endl;
+        for(list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
+            os << it->getType() << " " << it->name << ";" << endl;
         }
 
         os << "};" << endl;
