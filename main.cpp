@@ -8,6 +8,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <set>
 #include <stdexcept>
 #include <sstream>
 #include <fstream>
@@ -49,6 +50,95 @@ static shared_ptr<Class> addClass(shared_ptr<Class> cl) {
     return classes[cl->name] = cl;
 }
 
+//set of C++ keywords. initialized by initKeywordSet()
+set<string> keywordSet;
+
+//raw list of C++ keywords
+const char *keywords[] = {
+    "and",
+    "and_eq",
+    "asm",
+    "auto",
+    "bitand",
+    "bitor",
+    "bool",
+    "break",
+    "case",
+    "catch",
+    "char",
+    "class",
+    "compl",
+    "const",
+    "const_cast",
+    "continue",
+    "default",
+    "delete",
+    "do",
+    "double",
+    "dynamic_cast",
+    "else",
+    "enum",
+    "explicit",
+    "export",
+    "extern",
+    "false",
+    "float",
+    "for",
+    "friend",
+    "goto",
+    "if",
+    "inline",
+    "int",
+    "long",
+    "mutable",
+    "namespace",
+    "new",
+    "not",
+    "not_eq",
+    "operator",
+    "or",
+    "or_eq",
+    "private",
+    "protected",
+    "public",
+    "register",
+    "reinterpret_cast",
+    "return",
+    "short",
+    "signed",
+    "sizeof",
+    "static",
+    "static_cast",
+    "struct",
+    "switch",
+    "template",
+    "this",
+    "throw",
+    "true",
+    "try",
+    "typedef",
+    "typeid",
+    "typename",
+    "union",
+    "unsigned",
+    "using",
+    "virtual",
+    "void",
+    "volatile",
+    "wchar_t",
+    "while",
+    "xor",
+    "xor_eq",
+};
+
+static void initKeywordSet() {
+    //stuff keywords into keywordSet for fast lookup
+    for(int x = 0; x < sizeof(keywords) / sizeof(const char*); x++) {
+        cout << "keyword " << (x+1) << ": " << keywords[x] << endl;
+        keywordSet.insert(keywords[x]);
+    }
+}
+
 static string fixIdentifier(string str) {
     //strip any bad characters such as dots, colons, semicolons..
     string ret;
@@ -65,7 +155,8 @@ static string fixIdentifier(string str) {
             ret += "_";
     }
 
-    if(ret == "default")
+    //check if identifier is a reserved C++ keyword, and append an underscore if so
+    if(keywordSet.find(ret) != keywordSet.end())
         ret += "_";
 
     return ret;
@@ -391,6 +482,8 @@ int main(int argc, char** argv) {
     }
 
     XMLPlatformUtils::Initialize();
+
+    initKeywordSet();
 
     //HACKHACK: we should handle NS lookup properly
     nsLUT["xs"] = XSL;
