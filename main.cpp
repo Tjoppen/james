@@ -6,6 +6,7 @@
  */
 
 #include <iostream>
+#include <iomanip>
 #include <vector>
 #include <string>
 #include <set>
@@ -475,6 +476,50 @@ static void work(string outputDir, const vector<string>& schemaNames) {
     }
 }
 
+/**
+ * Reads the entire contents of an std::istream to a std::string.
+ */
+static string readIstreamToString(istream& is) {
+    ostringstream oss;
+
+    copy(istreambuf_iterator<char>(is), istreambuf_iterator<char>(), ostreambuf_iterator<char>(oss));
+
+    return oss.str();
+}
+
+/**
+ * Replaces the file named by originalName with the one named by newName if they differ.
+ * If not, newName is deleted.
+ * The purpose of this is to avoid the original file from being marked as changed,
+ * so that this tool can be incorporated into an automatic build system where only the files that did change have to be recompiled.
+ */
+static void diffAndReplace(string originalName, string newName) {
+    //read contents of both file. missing files give rise to empty strings
+    ifstream originalIfs(originalName.c_str());
+    ifstream newIfs(newName.c_str());
+
+    string originalStr = readIstreamToString(originalIfs);
+    string newStr = readIstreamToString(newIfs);
+
+    if(newStr == originalStr) {
+        //no difference - remove temporary file
+        if(unlink(newName.c_str()))
+            cout << "Warning: unlink() failed, ";
+
+        cout << "not changed" << endl;
+    } else {
+        //files differ - either original does not exist or the schema changed for this type
+        if(unlink(originalName.c_str()))
+            cout << "created" << endl;
+        else
+            cout << "changed" << endl;
+
+        //rename temp file to its real name
+        if(rename(newName.c_str(), originalName.c_str()))
+            throw runtime_error("Failed to rename '" + newName + "' to '" + originalName + "'");
+    }
+}
+
 int main(int argc, char** argv) {
     if(argc <= 2) {
         printUsage();
@@ -511,30 +556,38 @@ int main(int argc, char** argv) {
 
     work(outputDir, schemaNames);
 
+    cout << "Everything seems to be in order. Writing/updating headers and implementations as needed." << endl;
+
     //dump the appenders and parsers of all non-build-in classes
     for(map<FullName, shared_ptr<Class> >::iterator it = classes.begin(); it != classes.end(); it++) {
         if(!it->second->isBuiltIn()) {
             if(!it->second->isSimple())
             {
-                ostringstream oss;
-                oss << outputDir << "/" << it->first.second << ".cpp";
+                ostringstream originalName, newName;
+                originalName << outputDir << "/" << it->first.second << ".cpp";
+                newName      << outputDir << "/" << it->first.second << ".cpp_temp";
 
-                cout << oss.str() << endl;
+                cout << setw(60) << originalName.str() << ": ";
 
-                ofstream ofs(oss.str().c_str());
+                ofstream ofs(newName.str().c_str());
 
                 it->second->writeImplementation(ofs);
+
+                diffAndReplace(originalName.str(), newName.str());
             }
 
             {
-                ostringstream oss;
-                oss << outputDir << "/" << it->first.second << ".h";
+                ostringstream originalName, newName;
+                originalName << outputDir << "/" << it->first.second << ".h";
+                newName      << outputDir << "/" << it->first.second << ".h_temp";
 
-                cout << oss.str() << endl;
+                cout << setw(60) << originalName.str() << ": ";
 
-                ofstream ofs(oss.str().c_str());
+                ofstream ofs(newName.str().c_str());
 
                 it->second->writeHeader(ofs);
+
+                diffAndReplace(originalName.str(), newName.str());
             }
         }
     }
