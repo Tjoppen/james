@@ -11,7 +11,8 @@ using namespace boost;
 int main(void) {
     XMLPlatformUtils::Initialize();
 
-    stringstream ss, ss2, ss3, ss4, ss5, ss6;
+    stringstream ss, ss2, ss4, ss5, ss6;
+    string str3;
 
     {
         //create ExampleElement, populate with ints and shared_ptrs to other objects of the same type
@@ -43,7 +44,7 @@ int main(void) {
         //marshal to stringstream
         ss << *ect;
         ss2 << *ect;
-        ss3 << *ect;
+        str3 = *ect;
     }
 
     //print
@@ -69,7 +70,7 @@ int main(void) {
 
     //unmarshal using string constructor
     {
-        shared_ptr<ExampleElement2> ect(new ExampleElement2(ss3.str()));
+        shared_ptr<ExampleElement2> ect(new ExampleElement2(str3));
         ss6 << *ect;
     }
 
@@ -77,7 +78,7 @@ int main(void) {
     cout << "Via istream constructor: " << ss5.str() << endl;
     cout << "Via string constructor: " << ss6.str() << endl;
 
-    if(ss.str() == ss4.str() && ss2.str() == ss5.str() && ss3.str() == ss6.str())
+    if(ss.str() == ss4.str() && ss2.str() == ss5.str() && str3 == ss6.str())
         cout << "Success!" << endl;
     else
         cout << "String mismatch - objects probably incorrectly marshalled/unmarshalled" << endl;

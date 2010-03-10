@@ -254,6 +254,7 @@ void Class::writeImplementation(ostream& os) const {
     os << "}" << endl << endl;
 
     if(isDocument) {
+        //unmarshalling constructors
         os << className << "::" << className << "(std::istream& is) : " << getBaseClassname() << "() {" << endl;
         os << "is >> *this;" << endl;
         os << "}" << endl;
@@ -261,6 +262,13 @@ void Class::writeImplementation(ostream& os) const {
         os << className << "::" << className << "(const std::string& str) : " << getBaseClassname() << "() {" << endl;
         os << "istringstream iss(str);" << endl;
         os << "iss >> *this;" << endl;
+        os << "}" << endl;
+
+        //string cast operator
+        os << className << "::operator std::string () const {" << endl;
+        os << "ostringstream oss;" << endl;
+        os << "oss << *this;" << endl;
+        os << "return oss.str();" << endl;
         os << "}" << endl;
     }
 
@@ -326,6 +334,9 @@ void Class::writeHeader(ostream& os) const {
             //add constructor for unmarshalling this document from an istream of string
             os << className << "(std::istream& is);" << endl;
             os << className << "(const std::string& str);" << endl;
+
+            //string cast operator
+            os << "operator std::string () const;" << endl;
         }
 
         //prototypes
