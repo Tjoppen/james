@@ -6,28 +6,29 @@
 
 using namespace xercesc;
 using namespace std;
+using namespace boost;
 
 int main(void) {
     XMLPlatformUtils::Initialize();
 
-    stringstream ss, ss2;
+    stringstream ss, ss2, ss3, ss4, ss5, ss6;
 
     {
         //create ExampleElement, populate with ints and shared_ptrs to other objects of the same type
-        boost::shared_ptr<ExampleElement2> ect(new ExampleElement2);
+        shared_ptr<ExampleElement2> ect(new ExampleElement2);
 
         ect->requiredInteger = 1;
         ect->optionalInteger = 10;
 
-        ect->sub = boost::shared_ptr<ExampleComplexType>(new ExampleComplexType);
+        ect->sub = shared_ptr<ExampleComplexType>(new ExampleComplexType);
         ect->sub->requiredInteger = 2;
 
-        ect->subType = boost::shared_ptr<ExampleComplexType_subType>(new ExampleComplexType_subType);
+        ect->subType = shared_ptr<ExampleComplexType_subType>(new ExampleComplexType_subType);
         ect->subType->integer = 2;
 
         for(int x = 3; x < 10; x++) {
             ect->integerArray.push_back(x + 10);
-            boost::shared_ptr<ExampleComplexType> a(new ExampleComplexType);
+            shared_ptr<ExampleComplexType> a(new ExampleComplexType);
             a->requiredInteger = x;
             ect->subArray.push_back(a);
         }
@@ -41,24 +42,42 @@ int main(void) {
 
         //marshal to stringstream
         ss << *ect;
+        ss2 << *ect;
+        ss3 << *ect;
     }
 
     //print
     cout << ss.str() << endl;
 
+    //unmarshal using blank ExampleElement2
     {
-        boost::shared_ptr<ExampleElement2> ect(new ExampleElement2);
+        //create new ExampleElement2
+        shared_ptr<ExampleElement2> ect(new ExampleElement2);
 
-        //unmarshal to new ExampleElement
+        //unmarshal
         ss >> *ect;
 
         //re-marshal to a string that should match the old one
-        ss2 << *ect;
+        ss4 << *ect;
     }
 
-    cout << ss2.str() << endl;
+    //unmarshal using istream constructor
+    {
+        shared_ptr<ExampleElement2> ect(new ExampleElement2(ss2));
+        ss5 << *ect;
+    }
 
-    if(ss.str() == ss2.str())
+    //unmarshal using string constructor
+    {
+        shared_ptr<ExampleElement2> ect(new ExampleElement2(ss3.str()));
+        ss6 << *ect;
+    }
+
+    cout << "From blank instance: " << ss4.str() << endl;
+    cout << "Via istream constructor: " << ss5.str() << endl;
+    cout << "Via string constructor: " << ss6.str() << endl;
+
+    if(ss.str() == ss4.str() && ss2.str() == ss5.str() && ss3.str() == ss6.str())
         cout << "Success!" << endl;
     else
         cout << "String mismatch - objects probably incorrectly marshalled/unmarshalled" << endl;

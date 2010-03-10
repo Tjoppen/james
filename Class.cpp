@@ -243,7 +243,7 @@ void Class::writeImplementation(ostream& os) const {
     os << "using namespace xercesc;" << endl;
     os << "using namespace james;" << endl;
 
-    //constructor
+    //constructors
     os << className << "::" << className << "() : " << getBaseClassname() << "() {";
     
     //give all basic optional members a default value of zero
@@ -252,6 +252,17 @@ void Class::writeImplementation(ostream& os) const {
             os << it->name << " = " << it->cl->getDefaultValue() << ";" << endl;
 
     os << "}" << endl << endl;
+
+    if(isDocument) {
+        os << className << "::" << className << "(std::istream& is) : " << getBaseClassname() << "() {" << endl;
+        os << "is >> *this;" << endl;
+        os << "}" << endl;
+
+        os << className << "::" << className << "(const std::string& str) : " << getBaseClassname() << "() {" << endl;
+        os << "istringstream iss(str);" << endl;
+        os << "iss >> *this;" << endl;
+        os << "}" << endl;
+    }
 
     //method implementation
     if(isDocument) {
@@ -281,6 +292,10 @@ void Class::writeHeader(ostream& os) const {
     os << "#define _" << className << "_H" << endl;
 
     os << "#include <vector>" << endl;
+
+    if(isDocument)
+        os << "#include <istream>" << endl;
+
     os << "#include <boost/shared_ptr.hpp>" << endl;
 
     //simple types only need a typedef
@@ -306,6 +321,12 @@ void Class::writeHeader(ostream& os) const {
         os << "public:" << endl;
 
         os << className << "();" << endl;
+
+        if(isDocument) {
+            //add constructor for unmarshalling this document from an istream of string
+            os << className << "(std::istream& is);" << endl;
+            os << className << "(const std::string& str);" << endl;
+        }
 
         //prototypes
         if(isDocument)
