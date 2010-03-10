@@ -68,7 +68,7 @@ ostream& operator<< (ostream& os, const XMLDocument& doc) {
     if(!lsImplementation)   throw runtime_error("Failed to find a DOM LS implementation");
 
     DOMWriter *writer = lsImplementation->createDOMWriter();
-    
+
     if(!writer)             throw runtime_error("Failed to create DOM writer");
 
     //get name of root element and create new DOM dodument
@@ -84,7 +84,7 @@ ostream& operator<< (ostream& os, const XMLDocument& doc) {
     object->appendChildren(root);
 
     //serialize
-    XMLCh *str = writer->writeToString(*root);
+    XMLCh *str = writer->writeToString(*document);
 
     //convert XMLCh* string to std::string
     os << XercesString(str);
