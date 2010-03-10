@@ -6,7 +6,6 @@
  */
 
 #include <iostream>
-#include <iomanip>
 #include <vector>
 #include <string>
 #include <set>
@@ -571,7 +570,7 @@ int main(int argc, char** argv) {
                 ostringstream name, implementation;
                 name << outputDir << "/" << it->first.second << ".cpp";
 
-                cout << setw(70) << name.str() << ": ";
+                cout << name.str() << "\t";
 
                 //write implementation to memory, then diff against the possibly existing file
                 it->second->writeImplementation(implementation);
@@ -583,7 +582,7 @@ int main(int argc, char** argv) {
                 ostringstream name, header;
                 name << outputDir << "/" << it->first.second << ".h";
 
-                cout << setw(70) << name.str() << ": ";
+                cout << name.str() << "\t";
 
                 //write header to memory, then diff against the possibly existing file
                 it->second->writeHeader(header);
