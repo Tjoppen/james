@@ -30,6 +30,7 @@
 using namespace std;
 using namespace boost;
 using namespace xercesc;
+using namespace james;
 
 static void printUsage() {
     cout << "USAGE: james output-dir list-of-XSL-documents" << endl;
@@ -133,10 +134,8 @@ const char *keywords[] = {
 
 static void initKeywordSet() {
     //stuff keywords into keywordSet for fast lookup
-    for(int x = 0; x < sizeof(keywords) / sizeof(const char*); x++) {
-        cout << "keyword " << (x+1) << ": " << keywords[x] << endl;
+    for(int x = 0; x < sizeof(keywords) / sizeof(const char*); x++)
         keywordSet.insert(keywords[x]);
-    }
 }
 
 static string fixIdentifier(string str) {
@@ -190,7 +189,7 @@ static FullName toFullName(string typeName, string defaultNamespace = "") {
 
 static DOMElement *getExpectedChildElement(DOMNode *parent, string childName) {
     for(DOMNode *child = parent->getFirstChild(); child; child = child->getNextSibling()) {
-        if(child->getNodeType() == DOMNode::ELEMENT_NODE && child->getLocalName() && X(child->getLocalName()) == childName) {
+        if(child->getNodeType() == DOMNode::ELEMENT_NODE && child->getLocalName() && XercesString(child->getLocalName()) == childName) {
             DOMElement *childElement = dynamic_cast<DOMElement*>(child);
             CHECK(childElement);
 
@@ -198,7 +197,7 @@ static DOMElement *getExpectedChildElement(DOMNode *parent, string childName) {
         }
     }
 
-    throw runtime_error((string)X(parent->getLocalName()) + " missing expected child element " + childName);
+    throw runtime_error((string)XercesString(parent->getLocalName()) + " missing expected child element " + childName);
 }
 
 static vector<DOMElement*> getChildElements(DOMElement *parent) {
@@ -221,7 +220,7 @@ static vector<DOMElement*> getChildElementsByTagName(DOMElement *parent, string 
     vector<DOMElement*> ret;
 
     for(int x = 0; x < childElements.size(); x++) {
-        if(childElements[x]->getLocalName() && X(childElements[x]->getLocalName()) == childName) {
+        if(childElements[x]->getLocalName() && XercesString(childElements[x]->getLocalName()) == childName) {
             ret.push_back(childElements[x]);
         }
     }
@@ -248,11 +247,11 @@ static void parseSequence(DOMElement *parent, DOMElement *sequence, shared_ptr<C
         XercesString typeStr("type");
         XercesString minOccursStr("minOccurs");
         XercesString maxOccursStr("maxOccurs");
-        string name = fixIdentifier(X(child->getAttribute(X("name"))));
+        string name = fixIdentifier(XercesString(child->getAttribute(XercesString("name"))));
 
         if(child->hasAttribute(minOccursStr)) {
             stringstream ss;
-            ss << X(child->getAttribute(minOccursStr));
+            ss << XercesString(child->getAttribute(minOccursStr));
             ss >> minOccurs;
         }
 
@@ -283,7 +282,7 @@ static void parseSequence(DOMElement *parent, DOMElement *sequence, shared_ptr<C
 
             info.name = name;
             //assume in same namespace for now
-            info.type = toFullName(X(child->getAttribute(typeStr)));
+            info.type = toFullName(XercesString(child->getAttribute(typeStr)));
             info.minOccurs = minOccurs;
             info.maxOccurs = maxOccurs;
             info.isAttribute = false;
@@ -328,18 +327,18 @@ static void parseComplexType(DOMElement *element, FullName fullName, shared_ptr<
         if(name == "sequence") {
             parseSequence(element, child, cl);
         } else if(name == "choice" || name == "all") {
-            if(child->hasAttribute(X("minOccurs")) || child->hasAttribute(X("maxOccurs")))
+            if(child->hasAttribute(XercesString("minOccurs")) || child->hasAttribute(XercesString("maxOccurs")))
                 throw runtime_error("minOccurs/maxOccurs not currently supported in <choice>/<all> types");
 
             parseSequence(element, child, cl, true);
         } else if(name == "complexContent" || name == "simpleContent") {
             DOMElement *extension = getExpectedChildElement(child, "extension");
             
-            if(!extension->hasAttribute(X("base")))
+            if(!extension->hasAttribute(XercesString("base")))
                 throw runtime_error("Extension missing expected attribute base");
             
             //set base type and treat the extension as complexType itself
-            FullName base = toFullName(X(extension->getAttribute(X("base"))));
+            FullName base = toFullName(XercesString(extension->getAttribute(XercesString("base"))));
 
             cl->baseType = base;
             cl->hasBase = true;
@@ -348,18 +347,18 @@ static void parseComplexType(DOMElement *element, FullName fullName, shared_ptr<
         } else if(name == "attribute") {
             bool optional = false;
 
-            if(!child->hasAttribute(X("type")))
+            if(!child->hasAttribute(XercesString("type")))
                 throw runtime_error("<attribute> missing expected attribute 'type'");
 
-            if(!child->hasAttribute(X("name")))
+            if(!child->hasAttribute(XercesString("name")))
                 throw runtime_error("<attribute> missing expected attribute 'name'");
 
-            string attributeName = fixIdentifier(X(child->getAttribute(X("name"))));
+            string attributeName = fixIdentifier(XercesString(child->getAttribute(XercesString("name"))));
 
-            FullName type = toFullName(X(child->getAttribute(X("type"))));
+            FullName type = toFullName(XercesString(child->getAttribute(XercesString("type"))));
 
             //check for optional use
-            if(child->hasAttribute(X("use")) && X(child->getAttribute(X("use"))) == "optional")
+            if(child->hasAttribute(XercesString("use")) && XercesString(child->getAttribute(XercesString("use"))) == "optional")
                 optional = true;
 
             Class::Member info;
@@ -382,11 +381,11 @@ static void parseSimpleType(DOMElement *element, FullName fullName) {
 
     DOMElement *restriction = getExpectedChildElement(element, "restriction");
 
-    if(!restriction->hasAttribute(X("base")))
+    if(!restriction->hasAttribute(XercesString("base")))
         throw runtime_error("simpleType restriction lacks expected attribute 'base'");
 
     //convert xs:string and the like to their respective FullName
-    FullName baseName = toFullName(X(restriction->getAttribute(X("base"))));
+    FullName baseName = toFullName(XercesString(restriction->getAttribute(XercesString("base"))));
 
     //add class and return
     addClass(shared_ptr<Class>(new Class(fullName, Class::SIMPLE_TYPE, baseName)));
@@ -406,7 +405,7 @@ static void parseElement(DOMElement *element, string tns) {
 
     //<complexType>, <element> or <simpleType>
     //figure out its class name
-    XercesString name(element->getAttribute(X("name")));
+    XercesString name(element->getAttribute(XercesString("name")));
     FullName fullName(tns, name);
 
     cout << "\t" << "new " << nodeName << ": " << fullName.second << endl;
@@ -417,13 +416,13 @@ static void parseElement(DOMElement *element, string tns) {
         //if <element> is missing type, then its type is anonymous
         FullName type;
 
-        if(!element->hasAttribute(X("type"))) {
+        if(!element->hasAttribute(XercesString("type"))) {
             //anonymous element type. derive it using expected <complexType>
             type = FullName(tns, fullName.second + "Type");
 
             parseComplexType(getExpectedChildElement(element, "complexType"), type);
         } else
-            type = toFullName(X(element->getAttribute(X("type"))), tns);
+            type = toFullName(XercesString(element->getAttribute(XercesString("type"))), tns);
 
         addClass(shared_ptr<Class>(new Class(fullName, Class::COMPLEX_TYPE, type)))->isDocument = true;
     } else if(nodeName == "simpleType") {
@@ -442,9 +441,9 @@ static void work(string outputDir, const vector<string>& schemaNames) {
         DOMDocument *document = parser.getDocument();
         DOMElement *root = document->getDocumentElement();
 
-        DOMAttr *targetNamespace = root->getAttributeNode(X("targetNamespace"));
+        DOMAttr *targetNamespace = root->getAttributeNode(XercesString("targetNamespace"));
         CHECK(targetNamespace);
-        string tns = X(targetNamespace->getValue());
+        string tns = XercesString(targetNamespace->getValue());
 
         //HACKHACK: we should handle NS lookup properly
         nsLUT["tns"] = tns;

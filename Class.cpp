@@ -83,12 +83,12 @@ string Class::generateAppender() const {
 
         if(it->isAttribute) {
             //attribute
-            oss << "DOMAttr *" << nodeName << " = node->getOwnerDocument()->createAttribute(X(\"" << name << "\"));" << endl;
+            oss << "DOMAttr *" << nodeName << " = node->getOwnerDocument()->createAttribute(XercesString(\"" << name << "\"));" << endl;
             oss << it->cl->generateAttributeSetter(setterName, nodeName) << endl;
             oss << "node->setAttributeNode(" << nodeName << ");" << endl;
         } else {
             //element
-            oss << "DOMElement *" << nodeName << " = node->getOwnerDocument()->createElement(X(\"" << name << "\"));" << endl;
+            oss << "DOMElement *" << nodeName << " = node->getOwnerDocument()->createElement(XercesString(\"" << name << "\"));" << endl;
             oss << it->cl->generateElementSetter(setterName, nodeName) << endl;
             oss << "node->appendChild(" << nodeName << ");" << endl;
         }
@@ -165,8 +165,8 @@ string Class::generateParser() const {
     //attributes
     for(std::list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
         if(it->isAttribute) {
-            oss << "if(node->hasAttribute(X(\"" << it->name << "\"))) {" << endl;
-            oss << "DOMAttr *attributeNode = node->getAttributeNode(X(\"" << it->name << "\"));" << endl;
+            oss << "if(node->hasAttribute(XercesString(\"" << it->name << "\"))) {" << endl;
+            oss << "DOMAttr *attributeNode = node->getAttributeNode(XercesString(\"" << it->name << "\"));" << endl;
             oss << it->cl->generateAttributeParser(it->name, "attributeNode") << endl;
             oss << "}" << endl;
         }
@@ -240,6 +240,7 @@ void Class::writeImplementation(ostream& os) const {
 
     os << "using namespace std;" << endl;
     os << "using namespace xercesc;" << endl;
+    os << "using namespace james;" << endl;
 
     //constructor
     os << className << "::" << className << "() : " << getBaseClassname() << "() {";

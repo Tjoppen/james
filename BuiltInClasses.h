@@ -71,7 +71,7 @@ GENERATE_BUILTIN(DoubleClass, "double", "double", "0")};
 
 GENERATE_BUILTIN(BooleanClass, "boolean", "bool", "false")
     std::string generateElementSetter(std::string memberName, std::string nodeName) const {
-        return nodeName + "->setTextContent(X(" + memberName + " ? \"true\" : \"false\"));";
+        return nodeName + "->setTextContent(XercesString(" + memberName + " ? \"true\" : \"false\"));";
     }
 
     std::string generateAttributeSetter(std::string memberName, std::string attributeName) const {

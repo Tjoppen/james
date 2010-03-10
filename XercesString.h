@@ -12,26 +12,26 @@
 #include <string>
 #include <ostream>
 
-/**
- * Wrapper class for dealing with XMLCh* strings.
- * Can convert from and to such strings.
- */
-class XercesString : public std::basic_string<XMLCh> {
-public:
-    XercesString(const std::string& str);
-    XercesString(const XMLCh *str);
+namespace james {
+    /**
+     * Wrapper class for dealing with XMLCh* strings.
+     * Can convert from and to such strings.
+     */
+    class XercesString : public std::basic_string<XMLCh> {
+    public:
+        XercesString(const std::string& str);
+        XercesString(const XMLCh *str);
 
-    operator std::string () const;
-    operator const XMLCh* () const;
+        operator std::string () const;
+        operator const XMLCh* () const;
 
-    bool operator== (const std::string& str) const;
-    bool operator!= (const std::string& str) const;
-};
+        bool operator== (const std::string& str) const;
+        bool operator!= (const std::string& str) const;
+    };
+}
 
-std::ostream& operator<< (std::ostream& os, const XercesString& str);
+std::ostream& operator<< (std::ostream& os, const james::XercesString& str);
 std::ostream& operator<< (std::ostream& os, const XMLCh* str);
-
-#define X(x) XercesString(x)
 
 #endif	/* _XERCESSTRING_H */
 

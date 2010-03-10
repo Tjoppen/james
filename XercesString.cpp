@@ -12,6 +12,7 @@
 using namespace xercesc;
 using namespace boost;
 using namespace std;
+using namespace james;
 
 class XMLChDeleter {
 public:

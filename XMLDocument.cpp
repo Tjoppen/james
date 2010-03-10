@@ -60,7 +60,7 @@ public:
 ostream& operator<< (ostream& os, const XMLDocument& doc) {
     //TODO: make exception safe
     const XMLObject         *object = dynamic_cast<const XMLObject*>(&doc);
-    DOMImplementation       *implementation = DOMImplementationRegistry::getDOMImplementation(X("LS"));
+    DOMImplementation       *implementation = DOMImplementationRegistry::getDOMImplementation(XercesString("LS"));
     DOMImplementationLS     *lsImplementation = dynamic_cast<DOMImplementationLS*>(implementation);
 
     if(!object)             throw runtime_error(doc.getName() + " is not a sibling class of XMLObject");
@@ -72,7 +72,7 @@ ostream& operator<< (ostream& os, const XMLDocument& doc) {
     if(!writer)             throw runtime_error("Failed to create DOM writer");
 
     //get name of root element and create new DOM dodument
-    DOMDocument *document = implementation->createDocument(0, X(doc.getName()), 0);
+    DOMDocument *document = implementation->createDocument(0, XercesString(doc.getName()), 0);
 
     if(!document)           throw runtime_error("Failed to create DOM document");
 
@@ -87,7 +87,7 @@ ostream& operator<< (ostream& os, const XMLDocument& doc) {
     XMLCh *str = writer->writeToString(*root);
 
     //convert XMLCh* string to std::string
-    os << X(str);
+    os << XercesString(str);
 
     writer->release();
     document->release();
@@ -117,7 +117,7 @@ istream& operator>> (istream& is, XMLDocument& doc) {
     if(!root)       throw runtime_error("Failed to get document root");
 
     //check that the name of the root node matches the name of the XMLDocument
-    if(!root->getLocalName() || X(root->getLocalName()) != doc.getName())
+    if(!root->getLocalName() || XercesString(root->getLocalName()) != doc.getName())
         throw runtime_error("No local name for DOM document or supplied XML is not a " + doc.getName());
 
     object->parseNode(root);
