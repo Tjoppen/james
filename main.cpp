@@ -33,9 +33,11 @@ using namespace xercesc;
 using namespace james;
 
 static void printUsage() {
-    cout << "USAGE: james output-dir list-of-XSL-documents" << endl;
-    cout << " Generates C++ classes for marshalling and unmarshalling XML to C++ objects according to the given schemas." << endl;
-    cout << " Files are output in the specified output directory and are named type.h and type.cpp" << endl;
+    cerr << "USAGE: james [-v] output-dir list-of-XSL-documents" << endl;
+    cerr << " -v\tVerbose mode" << endl;
+    cerr << endl;
+    cerr << " Generates C++ classes for marshalling and unmarshalling XML to C++ objects according to the given schemas." << endl;
+    cerr << " Files are output in the specified output directory and are named type.h and type.cpp" << endl;
 }
 
 //maps namespace abbreviation to their full URIs
@@ -43,6 +45,8 @@ map<string, string> nsLUT;
 
 //collection of all generated classes
 map<FullName, shared_ptr<Class> > classes;
+
+bool verbose = false;
 
 static shared_ptr<Class> addClass(shared_ptr<Class> cl) {
     if(classes.find(cl->name) != classes.end())
@@ -408,7 +412,7 @@ static void parseElement(DOMElement *element, string tns) {
     XercesString name(element->getAttribute(XercesString("name")));
     FullName fullName(tns, name);
 
-    cout << "\t" << "new " << nodeName << ": " << fullName.second << endl;
+    if(verbose) cerr << "\t" << "new " << nodeName << ": " << fullName.second << endl;
 
     if(nodeName == "complexType")
         parseComplexType(element, fullName);
@@ -439,6 +443,10 @@ static void work(string outputDir, const vector<string>& schemaNames) {
         parser.parse(name.c_str());
 
         DOMDocument *document = parser.getDocument();
+
+        if(!document)
+            throw runtime_error("Failed to parse " + name + " - file does not exist?");
+
         DOMElement *root = document->getDocumentElement();
 
         DOMAttr *targetNamespace = root->getAttributeNode(XercesString("targetNamespace"));
@@ -447,8 +455,8 @@ static void work(string outputDir, const vector<string>& schemaNames) {
 
         //HACKHACK: we should handle NS lookup properly
         nsLUT["tns"] = tns;
-        
-        cout << "Target namespace: " << tns << endl;
+
+        if(verbose) cerr << "Target namespace: " << tns << endl;
 
         vector<DOMElement*> elements = getChildElements(root);
 
@@ -456,7 +464,7 @@ static void work(string outputDir, const vector<string>& schemaNames) {
             parseElement(elements[x], tns);
     }
 
-    cout << "About to make second pass. Pointing class members to referenced classes, or failing if any undefined classes are encountered." << endl;
+    if(verbose) cerr << "About to make second pass. Pointing class members to referenced classes, or failing if any undefined classes are encountered." << endl;
 
     //make second pass through classes and set all member and base class pointers correctly
     //this has the side effect of catching any undefined classes
@@ -508,13 +516,13 @@ static void diffAndReplace(string fileName, string newContents) {
 
     if(newContents == originalContents) {
         //no difference
-        cout << "not changed" << endl;
+        if(verbose) cerr << fileName << "\tnot changed" << endl;
     } else {
         //contents differ - either original does not exist or the schema changed for this type
         if(unlink(fileName.c_str()))
-            cout << "created" << endl;
+            cerr << fileName << "\tcreated" << endl;
         else
-            cout << "changed" << endl;
+            cerr << fileName << "\tchanged" << endl;
 
         //write new content
         ofstream ofs(fileName.c_str());
@@ -527,6 +535,14 @@ int main(int argc, char** argv) {
     if(argc <= 2) {
         printUsage();
         return 1;
+    }
+
+    if(argc > 3 && !strcmp(argv[1], "-v")) {
+        verbose = true;
+        cerr << "Verbose mode" << endl;
+
+        argv++;
+        argc--;
     }
 
     XMLPlatformUtils::Initialize();
@@ -558,8 +574,8 @@ int main(int argc, char** argv) {
         schemaNames.push_back(argv[x]);
 
     work(outputDir, schemaNames);
-
-    cout << "Everything seems to be in order. Writing/updating headers and implementations as needed." << endl;
+    
+    if(verbose) cerr << "Everything seems to be in order. Writing/updating headers and implementations as needed." << endl;
 
     //dump the appenders and parsers of all non-build-in classes
     for(map<FullName, shared_ptr<Class> >::iterator it = classes.begin(); it != classes.end(); it++) {
@@ -568,8 +584,6 @@ int main(int argc, char** argv) {
             {
                 ostringstream name, implementation;
                 name << outputDir << "/" << it->first.second << ".cpp";
-
-                cout << name.str() << "\t";
 
                 //write implementation to memory, then diff against the possibly existing file
                 it->second->writeImplementation(implementation);
@@ -580,8 +594,6 @@ int main(int argc, char** argv) {
             {
                 ostringstream name, header;
                 name << outputDir << "/" << it->first.second << ".h";
-
-                cout << name.str() << "\t";
 
                 //write header to memory, then diff against the possibly existing file
                 it->second->writeHeader(header);

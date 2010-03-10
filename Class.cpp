@@ -13,6 +13,8 @@
 
 using namespace std;
 
+extern bool verbose;
+
 Class::Class(FullName name, ClassType type) : name(name), type(type), 
         base(NULL), isDocument(false), hasBase(false) {
 }
@@ -45,17 +47,17 @@ void Class::addMember(Member memberInfo) {
     if(findMember(memberInfo.name) != members.end())
         throw runtime_error("Member " + memberInfo.name + " defined more than once in " + this->name.second);
 
-    cout << this->name.second << " got " << memberInfo.type.first << ":" << memberInfo.type.second << " " << memberInfo.name << ". Occurance: ";
+    if(verbose) cerr << this->name.second << " got " << memberInfo.type.first << ":" << memberInfo.type.second << " " << memberInfo.name << ". Occurance: ";
 
     if(memberInfo.maxOccurs == UNBOUNDED) {
-        cout << "at least " << memberInfo.minOccurs;
+        if(verbose) cerr << "at least " << memberInfo.minOccurs;
     } else if(memberInfo.minOccurs == memberInfo.maxOccurs) {
-        cout << "exactly " << memberInfo.minOccurs;
+        if(verbose) cerr << "exactly " << memberInfo.minOccurs;
     } else {
-        cout << "between " << memberInfo.minOccurs << "-" << memberInfo.maxOccurs;
+        if(verbose) cerr << "between " << memberInfo.minOccurs << "-" << memberInfo.maxOccurs;
     }
 
-    cout << endl;
+    if(verbose) cerr << endl;
 
     members.push_back(memberInfo);
 }
@@ -219,7 +221,6 @@ string Class::getBaseHeader() const {
 }
 
 void Class::writeImplementation(ostream& os) const {
-    //cout << "writeImplementation()" << endl;
     ClassName className = name.second;
 
     os << "#include <sstream>" << endl;
