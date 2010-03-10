@@ -38,6 +38,10 @@
             <xs:extension base="tns:ExampleComplexType">
                 <xs:sequence>
                     <xs:element name="extensionInt" type="xs:int"/>
+                    <xs:choice>
+                        <xs:element name="choiceA" type="xs:int"/>
+                        <xs:element name="choiceB" type="xs:int"/>
+                    </xs:choice>
                 </xs:sequence>
                 <xs:attribute name="extensionAttribute" type="xs:string"/>
             </xs:extension>

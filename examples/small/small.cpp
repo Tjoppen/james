@@ -20,6 +20,7 @@ int main(void) {
 
         ect->requiredInteger = 1;
         ect->optionalInteger = 10;
+        ect->choiceA = 332;
 
         ect->sub = shared_ptr<ExampleComplexType>(new ExampleComplexType);
         ect->sub->requiredInteger = 2;

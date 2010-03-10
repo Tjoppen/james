@@ -310,6 +310,19 @@ static void parseSequence(DOMElement *parent, DOMElement *sequence, shared_ptr<C
             cl->addMember(info);
         }
     }
+
+    //handle <choice>:es in <sequence>:es
+    //choices can't have choices in them
+    if(choice)
+        return;
+
+    vector<DOMElement*> choices = getChildElementsByTagName(sequence, "choice");
+
+    for(int x = 0; x < choices.size(); x++) {
+        DOMElement *choice = choices[x];
+
+        parseSequence(parent, choice, cl, true);
+    }
 }
 
 static void parseComplexType(DOMElement *element, FullName fullName, shared_ptr<Class> cl) {
