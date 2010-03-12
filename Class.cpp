@@ -213,7 +213,16 @@ string Class::generateInsertClones() const {
             oss << "ret->" << it->name << ".push_back(temp);" << endl;
             oss << "}" << endl;
         } else {
+            if(!it->isRequired()) {
+                //insert a non-null check
+                oss << "if(" << it->cl->getTester(name) << ") {" << endl;
+            }
+
             oss << it->cl->generateMemberCloner(targetName, sourceName) << endl;
+
+            if(!it->isRequired()) {
+                oss << "}" << endl;
+            }
         }
     }
 
