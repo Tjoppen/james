@@ -195,6 +195,42 @@ string Class::generateAttributeParser(string memberName, string attributeName) c
     throw runtime_error("Tried to generateAttributeParser() for a non-simple Class");
 }
 
+string Class::generateInsertClones() const {
+    //TODO: implement generateCloner()
+    ostringstream oss;
+    ClassName className = name.second;
+
+    for(list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
+        string name = it->name;
+        string sourceName = "this->" + it->name;
+        string targetName = "ret->" + it->name;
+        
+        if(it->isArray()) {
+            sourceName = "(*it)";
+            targetName = "temp";
+            oss << "for(" << it->getType() << "::const_iterator it = " << name << ".begin(); it != " << name << ".end(); it++) {" << endl;
+            oss << it->cl->getClassType() << " " << it->cl->generateMemberCloner(targetName, sourceName) << endl;
+            oss << "ret->" << it->name << ".push_back(temp);" << endl;
+            oss << "}" << endl;
+        } else {
+            oss << it->cl->generateMemberCloner(targetName, sourceName) << endl;
+        }
+    }
+
+    oss << "return ret;" << endl;
+
+    return oss.str();
+}
+
+string Class::generateMemberCloner(string cloneName, string memberName) const {
+    if(base)
+        return base->generateMemberCloner(cloneName, memberName);
+    else if(isBuiltIn())
+        return cloneName + " = " + memberName + ";";
+    else
+        return cloneName + " = " + memberName + "->clone();";
+}
+
 string Class::getClassname() const {
     if(isSimple() && base)
         return base->getClassname();
@@ -253,6 +289,7 @@ void Class::writeImplementation(ostream& os) const {
 
     os << "}" << endl << endl;
 
+    //method implementations
     if(isDocument) {
         //unmarshalling constructors
         os << className << "::" << className << "(std::istream& is) : " << getBaseClassname() << "() {" << endl;
@@ -270,10 +307,8 @@ void Class::writeImplementation(ostream& os) const {
         os << "oss << *this;" << endl;
         os << "return oss.str();" << endl;
         os << "}" << endl;
-    }
 
-    //method implementation
-    if(isDocument) {
+        //getName()
         os << "std::string " << className << "::getName() const {" << endl;
         os << "return \"" << className << "\";" << endl;
         os << "}" << endl;
@@ -290,6 +325,27 @@ void Class::writeImplementation(ostream& os) const {
         os << "void " << className << "::parseNode(xercesc::DOMElement *node) {" << endl;
         os << generateParser() << endl;
         os << "}" << endl << endl;
+
+        //clone()
+        os << "boost::shared_ptr<" << className << "> " << className << "::clone() const {" << endl;
+        os << "boost::shared_ptr<" << className << "> ret(new " << className << ");" << endl;
+
+        if(base)
+            os << base->name.second << "::insertClones(ret);" << endl;
+
+        os << "insertClones(ret);" << endl;
+        os << "return ret;" << endl;
+        os << "}" << endl;
+
+        //insertClones()
+        os << "boost::shared_ptr<" << className << "> " << className << "::insertClones(boost::shared_ptr<" << className << "> ret) const {" << endl;
+        os << generateInsertClones() << endl;
+        os << "}" << endl;
+
+        //clone-cast operator
+        os << className << "::operator boost::shared_ptr<" << className << "> () const {" << endl;
+        os << "return clone();" << endl;
+        os << "}" << endl;
     }
 }
 
@@ -330,6 +386,7 @@ void Class::writeHeader(ostream& os) const {
 
         os << className << "();" << endl;
 
+        //prototypes
         if(isDocument) {
             //add constructor for unmarshalling this document from an istream of string
             os << className << "(std::istream& is);" << endl;
@@ -337,14 +394,24 @@ void Class::writeHeader(ostream& os) const {
 
             //string cast operator
             os << "operator std::string () const;" << endl;
-        }
 
-        //prototypes
-        if(isDocument)
+            //getName()
             os << "std::string getName() const;" << endl;
-        else {
+        } else {
             os << "virtual void appendChildren(xercesc::DOMElement *node) const;" << endl;
             os << "virtual void parseNode(xercesc::DOMElement *node);" << endl;
+
+            //clone()
+            os << "boost::shared_ptr<" << className << "> clone() const;" << endl;
+
+            //clone-cast operator
+            os << "operator boost::shared_ptr<" << className << "> () const;" << endl;
+
+            //insertClones()
+            os << "protected:" << endl;
+            os << "boost::shared_ptr<" << className << "> insertClones(boost::shared_ptr<" << className << "> ret) const;" << endl;
+
+            os << "public:" << endl;
         }
 
         //members
