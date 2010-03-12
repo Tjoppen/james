@@ -30,8 +30,14 @@ int main(void) {
 
         for(int x = 3; x < 10; x++) {
             ect->integerArray.push_back(x + 10);
-            shared_ptr<ExampleComplexType> a(new ExampleComplexType);
-            a->requiredInteger = x;
+
+            //the following demonstrates the clone cast operator
+            //in other words when push_back() is called with the ExampleComplexType instance
+            //the instance is cast to a shared_ptr<ExampleComplexType>
+            //the cast operator makes use of ExampleComplexType::clone()
+            ExampleComplexType a;
+            a.requiredInteger = x;
+
             ect->subArray.push_back(a);
         }
 
