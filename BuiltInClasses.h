@@ -103,7 +103,7 @@ GENERATE_BUILTIN(BooleanClass, "boolean", "bool", "false")
     }
 
     std::string getTester(std::string name) const {
-        return name + ".length() > 0";
+        return name;
     }
 };
 

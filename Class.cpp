@@ -226,8 +226,6 @@ string Class::generateInsertClones() const {
         }
     }
 
-    oss << "return ret;" << endl;
-
     return oss.str();
 }
 
@@ -334,28 +332,28 @@ void Class::writeImplementation(ostream& os) const {
         os << "void " << className << "::parseNode(xercesc::DOMElement *node) {" << endl;
         os << generateParser() << endl;
         os << "}" << endl << endl;
-
-        //clone()
-        os << "boost::shared_ptr<" << className << "> " << className << "::clone() const {" << endl;
-        os << "boost::shared_ptr<" << className << "> ret(new " << className << ");" << endl;
-
-        if(base)
-            os << base->name.second << "::insertClones(ret);" << endl;
-
-        os << "insertClones(ret);" << endl;
-        os << "return ret;" << endl;
-        os << "}" << endl;
-
-        //insertClones()
-        os << "boost::shared_ptr<" << className << "> " << className << "::insertClones(boost::shared_ptr<" << className << "> ret) const {" << endl;
-        os << generateInsertClones() << endl;
-        os << "}" << endl;
-
-        //clone-cast operator
-        os << className << "::operator boost::shared_ptr<" << className << "> () const {" << endl;
-        os << "return clone();" << endl;
-        os << "}" << endl;
     }
+
+    //clone()
+    os << "boost::shared_ptr<" << className << "> " << className << "::clone() const {" << endl;
+    os << "boost::shared_ptr<" << className << "> ret(new " << className << ");" << endl;
+
+    if(base)
+        os << base->name.second << "::insertClones(ret);" << endl;
+
+    os << "insertClones(ret);" << endl;
+    os << "return ret;" << endl;
+    os << "}" << endl;
+
+    //insertClones()
+    os << "void " << className << "::insertClones(boost::shared_ptr<" << className << "> ret) const {" << endl;
+    os << generateInsertClones() << endl;
+    os << "}" << endl;
+
+    //cast operator
+    os << className << "::operator boost::shared_ptr<" << className << "> () const {" << endl;
+    os << "return boost::shared_ptr<" << className << ">(new " << className << "(*this));" << endl;
+    os << "}" << endl;
 }
 
 void Class::writeHeader(ostream& os) const {
@@ -369,7 +367,7 @@ void Class::writeHeader(ostream& os) const {
     if(isDocument)
         os << "#include <istream>" << endl;
 
-    os << "#include <boost/shared_ptr.hpp>" << endl;
+   os << "#include <boost/shared_ptr.hpp>" << endl;
 
     //simple types only need a typedef
     if(isSimple()) {
@@ -409,19 +407,19 @@ void Class::writeHeader(ostream& os) const {
         } else {
             os << "virtual void appendChildren(xercesc::DOMElement *node) const;" << endl;
             os << "virtual void parseNode(xercesc::DOMElement *node);" << endl;
-
-            //clone()
-            os << "boost::shared_ptr<" << className << "> clone() const;" << endl;
-
-            //clone-cast operator
-            os << "operator boost::shared_ptr<" << className << "> () const;" << endl;
-
-            //insertClones()
-            os << "protected:" << endl;
-            os << "boost::shared_ptr<" << className << "> insertClones(boost::shared_ptr<" << className << "> ret) const;" << endl;
-
-            os << "public:" << endl;
         }
+
+        //clone()
+        os << "boost::shared_ptr<" << className << "> clone() const;" << endl;
+
+        //cast operator
+        os << "operator boost::shared_ptr<" << className << "> () const;" << endl;
+
+        //insertClones()
+        os << "protected:" << endl;
+        os << "void insertClones(boost::shared_ptr<" << className << "> ret) const;" << endl;
+
+        os << "public:" << endl;
 
         //members
         for(list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
