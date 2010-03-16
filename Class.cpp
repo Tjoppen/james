@@ -411,7 +411,7 @@ void Class::writeHeader(ostream& os) const {
             os << "std::string getName() const;" << endl;
 
             //getNamespace()
-            os << "virtual std::string getNamespace() const;" << endl;
+            os << "std::string getNamespace() const;" << endl;
         } else {
             os << "virtual void appendChildren(xercesc::DOMElement *node) const;" << endl;
             os << "virtual void parseNode(xercesc::DOMElement *node);" << endl;
