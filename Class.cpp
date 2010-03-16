@@ -94,7 +94,7 @@ string Class::generateAppender() const {
             oss << it->cl->generateElementSetter(setterName, nodeName) << endl;
             oss << "node->appendChild(" << nodeName << ");" << endl;
         }
-
+        
         if(it->isArray() || !it->isRequired())
             oss << "}" << endl;
 
@@ -319,6 +319,11 @@ void Class::writeImplementation(ostream& os) const {
         os << "std::string " << className << "::getName() const {" << endl;
         os << "return \"" << className << "\";" << endl;
         os << "}" << endl;
+
+        //getNamespace()
+        os << "std::string " << className << "::getNamespace() const {" << endl;
+        os << "return \"" << name.first << "\";" << endl;
+        os << "}" << endl;
     } else {
         os << "void " << className << "::appendChildren(xercesc::DOMElement *node) const {" << endl;
         
@@ -404,6 +409,9 @@ void Class::writeHeader(ostream& os) const {
 
             //getName()
             os << "std::string getName() const;" << endl;
+
+            //getNamespace()
+            os << "virtual std::string getNamespace() const;" << endl;
         } else {
             os << "virtual void appendChildren(xercesc::DOMElement *node) const;" << endl;
             os << "virtual void parseNode(xercesc::DOMElement *node);" << endl;

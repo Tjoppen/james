@@ -80,6 +80,8 @@ ostream& operator<< (ostream& os, const XMLDocument& doc) {
 
     if(!root)               throw runtime_error("Failed failed to get DOM document element");
 
+    root->setAttribute(XercesString("xmlns"), XercesString(doc.getNamespace()));
+
     //append the nodes of each member variable to the root element in a recursive fashion
     object->appendChildren(root);
 

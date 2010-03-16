@@ -19,6 +19,11 @@ namespace james {
     class XMLDocument {
     public:
         /**
+         * Should return the namespace URI of this document.
+         */
+        virtual std::string getNamespace() const = 0;
+
+        /**
          * Should return the name of the root node in this document.
          */
         virtual std::string getName() const = 0;
