@@ -92,9 +92,12 @@ ostream& operator<< (ostream& os, const XMLDocument& doc) {
     writer->release();
     document->release();
 
-    //HACKHACK: if we don't do this valgrind complains
-    //FIXME: we should call XMLString::release(), but that causes a mismatched delete[] - new thing
-    delete str;
+    /**
+     * Manually free the XMLCh* using fgMemoryManager.
+     * If we use XMLString::release() valgrind whines, so use the same memory
+     * manages as our created DOMWriter does.
+     */
+    XMLPlatformUtils::fgMemoryManager->deallocate(str);
 
     return os;
 }
