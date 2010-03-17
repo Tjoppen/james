@@ -5,6 +5,8 @@
  * Created on February 15, 2010, 1:22 PM
  */
 
+#include <boost/shared_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <xercesc/dom/DOMImplementationRegistry.hpp>
 #include <xercesc/dom/DOMImplementation.hpp>
 #include <xercesc/dom/DOMImplementationLS.hpp>
@@ -15,6 +17,7 @@
 #include <xercesc/parsers/XercesDOMParser.hpp>
 #include <xercesc/util/BinInputStream.hpp>
 #include <xercesc/sax/InputSource.hpp>
+#include <xercesc/framework/XMLFormatter.hpp>
 #include <stdexcept>
 #include <istream>
 #include <ostream>
@@ -57,8 +60,37 @@ public:
     }
 };
 
+/**
+ * Used for serializing directly to an std::ostream.
+ */
+class OstreamFormatTarget : public XMLFormatTarget {
+    ostream& os;
+
+public:
+    OstreamFormatTarget(ostream& os) : os(os) {
+    }
+
+    void writeChars(const XMLByte* const toWrite, const unsigned int count, XMLFormatter* const formatter) {
+        os.write((const char*)toWrite, count);
+    }
+};
+
+//deleters
+class WriterDeleter {
+public:
+    void operator () (DOMWriter *writer) {
+        writer->release();
+    }
+};
+
+class DocumentDeleter {
+public:
+    void operator () (DOMDocument *document) {
+        document->release();
+    }
+};
+
 ostream& operator<< (ostream& os, const XMLDocument& doc) {
-    //TODO: make exception safe
     const XMLObject         *object = dynamic_cast<const XMLObject*>(&doc);
     DOMImplementation       *implementation = DOMImplementationRegistry::getDOMImplementation(XercesString("LS"));
     DOMImplementationLS     *lsImplementation = dynamic_cast<DOMImplementationLS*>(implementation);
@@ -67,12 +99,14 @@ ostream& operator<< (ostream& os, const XMLDocument& doc) {
     if(!implementation)     throw runtime_error("Failed to find a DOM implementation");
     if(!lsImplementation)   throw runtime_error("Failed to find a DOM LS implementation");
 
-    DOMWriter *writer = lsImplementation->createDOMWriter();
+    //shared_ptr + deleter -> exception safety
+    boost::shared_ptr<DOMWriter> writer(lsImplementation->createDOMWriter(), WriterDeleter());
 
     if(!writer)             throw runtime_error("Failed to create DOM writer");
 
     //get name of root element and create new DOM dodument
-    DOMDocument *document = implementation->createDocument(0, XercesString(doc.getName()), 0);
+    //shared_ptr + deleter -> exception safety
+    boost::shared_ptr<DOMDocument> document(implementation->createDocument(0, XercesString(doc.getName()), 0), DocumentDeleter());
 
     if(!document)           throw runtime_error("Failed to create DOM document");
 
@@ -85,22 +119,12 @@ ostream& operator<< (ostream& os, const XMLDocument& doc) {
     //append the nodes of each member variable to the root element in a recursive fashion
     object->appendChildren(root);
 
-    //serialize
-    XMLCh *str = writer->writeToString(*document);
+    //serialize directly to the ostream
+    //we only need a scoped_ptr here
+    boost::scoped_ptr<OstreamFormatTarget> target(new OstreamFormatTarget(os));
 
-    //convert XMLCh* string to std::string
-    os << XercesString(str);
-
-    writer->release();
-    document->release();
-
-    /**
-     * Manually free the XMLCh* using fgMemoryManager.
-     * If we use XMLString::release() valgrind whines, so use the same memory
-     * manages as our created DOMWriter does.
-     */
-    XMLPlatformUtils::fgMemoryManager->deallocate(str);
-
+    writer->writeNode(target.get(), *document);
+    
     return os;
 }
 
