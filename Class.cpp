@@ -16,12 +16,11 @@ using namespace std;
 extern bool verbose;
 
 Class::Class(FullName name, ClassType type) : name(name), type(type), 
-        base(NULL), isDocument(false), hasBase(false) {
+        base(NULL), isDocument(false) {
 }
 
 Class::Class(FullName name, ClassType type, FullName baseType) : name(name),
-        type(type), base(NULL), isDocument(false),
-        hasBase(true), baseType(baseType) {
+        type(type), base(NULL), isDocument(false), baseType(baseType) {
 }
 
 Class::~Class() {
@@ -33,6 +32,10 @@ bool Class::isSimple() const {
 
 bool Class::isBuiltIn() const {
     return false;
+}
+
+bool Class::hasBase() const {
+    return baseType.second.length() > 0;
 }
 
 std::list<Class::Member>::iterator Class::findMember(std::string name) {
@@ -121,8 +124,8 @@ string Class::generateAttributeSetter(string memberName, string attributeName) c
 string Class::generateParser() const {
     ostringstream oss;
 
-    if(hasBase && !base->isSimple())
-        oss << getBaseClassname() << "::parseNode(node);" << endl;
+    if(base && !base->isSimple())
+        oss << base->getClassname() << "::parseNode(node);" << endl;
 
     oss << "for(DOMNode *child = node->getFirstChild(); child; child = child->getNextSibling()) {" << endl;
     oss << "if(!child->getLocalName()) continue;" << endl;
@@ -252,15 +255,11 @@ string Class::getClassType() const {
         return "boost::shared_ptr<" + name.second + ">";
 }
 
-string Class::getBaseClassname() const {
-    return hasBase ? base->getClassname() : "james::XMLObject";
-}
-
 string Class::getBaseHeader() const {
-    if(base && base->isSimple())
+    if(base->isSimple())
         return base->getBaseHeader();
     
-    return hasBase ? "\"" + base->getClassname() + ".h\"" : "\"XMLObject.h\"";
+    return "\"" + base->getClassname() + ".h\"";
 }
 
 void Class::writeImplementation(ostream& os) const {
@@ -287,7 +286,10 @@ void Class::writeImplementation(ostream& os) const {
     os << "using namespace james;" << endl;
 
     //constructors
-    os << className << "::" << className << "() : " << getBaseClassname() << "() {";
+    if(base)
+        os << className << "::" << className << "() : " << base->getClassname() << "() {";
+    else
+        os << className << "::" << className << "() {";
     
     //give all basic optional members a default value of zero
     for(list<Member>::const_iterator it = members.begin(); it != members.end(); it++)
@@ -299,11 +301,11 @@ void Class::writeImplementation(ostream& os) const {
     //method implementations
     if(isDocument) {
         //unmarshalling constructors
-        os << className << "::" << className << "(std::istream& is) : " << getBaseClassname() << "() {" << endl;
+        os << className << "::" << className << "(std::istream& is) : " << base->getClassname() << "() {" << endl;
         os << "is >> *this;" << endl;
         os << "}" << endl;
 
-        os << className << "::" << className << "(const std::string& str) : " << getBaseClassname() << "() {" << endl;
+        os << className << "::" << className << "(const std::string& str) : " << base->getClassname() << "() {" << endl;
         os << "istringstream iss(str);" << endl;
         os << "iss >> *this;" << endl;
         os << "}" << endl;
@@ -327,19 +329,19 @@ void Class::writeImplementation(ostream& os) const {
 
         //appendChildren()
         os << "void " << className << "::appendChildren(xercesc::DOMElement *node) const {" << endl;
-        os << getBaseClassname() << "::appendChildren(node);" << endl;
+        os << base->getClassname() << "::appendChildren(node);" << endl;
         os << "}" << endl;
 
         //parseNode()
         os << "void " << className << "::parseNode(xercesc::DOMElement *node) {" << endl;
-        os << getBaseClassname() << "::parseNode(node);" << endl;
+        os << base->getClassname() << "::parseNode(node);" << endl;
         os << "}" << endl << endl;
     } else {
         os << "void " << className << "::appendChildren(xercesc::DOMElement *node) const {" << endl;
         
         //call base appender
-        if(hasBase && !base->isSimple())
-            os << getBaseClassname() << "::appendChildren(node);" << endl;
+        if(base && !base->isSimple())
+            os << base->getClassname() << "::appendChildren(node);" << endl;
 
         os << generateAppender() << endl;
         os << "}" << endl << endl;
@@ -382,13 +384,16 @@ void Class::writeHeader(ostream& os) const {
     if(isDocument)
         os << "#include <istream>" << endl;
 
-   os << "#include <boost/shared_ptr.hpp>" << endl;
+    os << "#include <boost/shared_ptr.hpp>" << endl;
+    os << "#include <xercesc/util/XercesDefs.hpp>" << endl;
+    os << "XERCES_CPP_NAMESPACE_BEGIN class DOMElement; XERCES_CPP_NAMESPACE_END" << endl;
 
     //simple types only need a typedef
     if(isSimple()) {
         os << "typedef " << base->getClassname() << " " << name.second << ";" << endl;
     } else {
-        os << "#include " << getBaseHeader() << endl;
+        if(base)
+            os << "#include " << getBaseHeader() << endl;
 
         if(isDocument)
             os << "#include \"XMLDocument.h\"" << endl;
@@ -398,11 +403,13 @@ void Class::writeHeader(ostream& os) const {
             if(!it->cl->isSimple())
                 os << "class " << it->cl->getClassname() << ";" << endl;
 
-        os << "class " << className << " : public " << getBaseClassname();
-
         if(isDocument)
-            os << ", public james::XMLDocument" << endl;
-
+            os << "class " << className << " : public " << base->getClassname() << ", public james::XMLDocument" << endl;
+        else if(base)
+            os << "class " << className << " : public " << base->getClassname();
+        else
+            os << "class " << className;
+        
         os << " {" << endl;
         os << "public:" << endl;
 

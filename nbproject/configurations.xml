@@ -6,7 +6,6 @@
                    projectFiles="true">
       <logicalFolder name="f1" displayName="james" projectFiles="true">
         <itemPath>XMLDocument.h</itemPath>
-        <itemPath>XMLObject.h</itemPath>
         <itemPath>XercesString.h</itemPath>
       </logicalFolder>
       <itemPath>BuiltInClasses.h</itemPath>
@@ -22,7 +21,6 @@
                    projectFiles="true">
       <logicalFolder name="f1" displayName="james" projectFiles="true">
         <itemPath>XMLDocument.cpp</itemPath>
-        <itemPath>XMLObject.cpp</itemPath>
         <itemPath>XercesString.cpp</itemPath>
       </logicalFolder>
       <itemPath>BuiltInClasses.cpp</itemPath>

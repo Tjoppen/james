@@ -49,9 +49,10 @@ public:
 
     bool isDocument;            //true if this is a document class
 
-    bool hasBase;
     FullName baseType;
     Class *base;
+
+    bool hasBase() const;
     
     std::list<Member> members;
 
@@ -109,11 +110,6 @@ public:
      * Should return the name with which to refer to this Class.
      */
     virtual std::string getClassname() const;
-
-    /**
-     * Returns classname of base, or XMLObject if none.
-     */
-    std::string getBaseClassname() const;
 
     /**
      * Returns name of header wherein the base class is defined.

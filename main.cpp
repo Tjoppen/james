@@ -358,7 +358,6 @@ static void parseComplexType(DOMElement *element, FullName fullName, shared_ptr<
             FullName base = toFullName(XercesString(extension->getAttribute(XercesString("base"))));
 
             cl->baseType = base;
-            cl->hasBase = true;
 
             parseComplexType(extension, fullName, cl);
         } else if(name == "attribute") {
@@ -482,12 +481,13 @@ static void work(string outputDir, const vector<string>& schemaNames) {
     //make second pass through classes and set all member and base class pointers correctly
     //this has the side effect of catching any undefined classes
     for(map<FullName, shared_ptr<Class> >::iterator it = classes.begin(); it != classes.end(); it++) {
-        if(it->second->hasBase) {
+        if(it->second->hasBase()) {
             if(classes.find(it->second->baseType) == classes.end())
                 throw runtime_error("Undefined base type " + it->second->baseType.first + ":" + it->second->baseType.second + " of " + it->second->name.first + ":" + it->second->name.second);
 
             it->second->base = classes[it->second->baseType].get();
-        }
+        } else if(it->second->isDocument)
+            throw runtime_error("Document without base type!");
 
         for(list<Class::Member>::iterator it2 = it->second->members.begin(); it2 != it->second->members.end(); it2++) {
             if(classes.find(it2->type) == classes.end())
