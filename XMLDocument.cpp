@@ -22,7 +22,6 @@
 #include <istream>
 #include <ostream>
 #include "XMLDocument.h"
-#include "XMLObject.h"
 #include "XercesString.h"
 
 using namespace xercesc;
@@ -91,11 +90,9 @@ public:
 };
 
 ostream& operator<< (ostream& os, const XMLDocument& doc) {
-    //const XMLObject         *object = dynamic_cast<const XMLObject*>(&doc);
     DOMImplementation       *implementation = DOMImplementationRegistry::getDOMImplementation(XercesString("LS"));
     DOMImplementationLS     *lsImplementation = dynamic_cast<DOMImplementationLS*>(implementation);
 
-    //if(!object)             throw runtime_error(doc.getName() + " is not a sibling class of XMLObject");
     if(!implementation)     throw runtime_error("Failed to find a DOM implementation");
     if(!lsImplementation)   throw runtime_error("Failed to find a DOM LS implementation");
 
@@ -135,10 +132,8 @@ istream& operator>> (istream& is, XMLDocument& doc) {
     parser.setDoNamespaces(true);
     parser.parse(IStreamInputSource(is));
 
-    //XMLObject       *object = dynamic_cast<XMLObject*>(&doc);
     DOMDocument     *document = parser.getDocument();
 
-    //if(!object)     throw runtime_error(doc.getName() + " is not a sibling class of XMLObject");
     if(!document)   throw runtime_error("Failed to parse document");
 
     DOMElement      *root = document->getDocumentElement();

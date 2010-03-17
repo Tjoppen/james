@@ -9,12 +9,17 @@
 #define	_XMLDOCUMENT_H
 
 #include <string>
+#include <xercesc/util/XercesDefs.hpp>
+
+XERCES_CPP_NAMESPACE_BEGIN
+    class DOMElement;
+XERCES_CPP_NAMESPACE_END
 
 namespace james {
     /**
-     * An XMLDocument is an interface for an XMLObject which is the root of a document.
-     * In addition to having children, like a normal XMLObject in accordance
-     * with the schema, it also has a name.
+     * An XMLDocument is an interface for an XML object which is the root of a document.
+     * In addition to having children, like a normal XML object in accordance
+     * with the schema, it also has a name and a namespace.
      */
     class XMLDocument {
     public:
