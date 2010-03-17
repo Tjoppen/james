@@ -9,9 +9,3 @@
 
 using namespace james;
 using namespace std;
-
-XMLObject::XMLObject() {
-}
-
-XMLObject::~XMLObject() {
-}

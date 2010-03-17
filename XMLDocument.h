@@ -27,6 +27,16 @@ namespace james {
          * Should return the name of the root node in this document.
          */
         virtual std::string getName() const = 0;
+
+        /**
+         * Should create and append all member variables specified in the schema as DOM nodes to the specified target node.
+         */
+        virtual void appendChildren(xercesc::DOMElement *node) const = 0;
+
+        /**
+         * Should parse the values contained in the specified node into the member variables.
+         */
+        virtual void parseNode(xercesc::DOMElement *node) = 0;
     };
 }
 

@@ -324,6 +324,16 @@ void Class::writeImplementation(ostream& os) const {
         os << "std::string " << className << "::getNamespace() const {" << endl;
         os << "return \"" << name.first << "\";" << endl;
         os << "}" << endl;
+
+        //appendChildren()
+        os << "void " << className << "::appendChildren(xercesc::DOMElement *node) const {" << endl;
+        os << getBaseClassname() << "::appendChildren(node);" << endl;
+        os << "}" << endl;
+
+        //parseNode()
+        os << "void " << className << "::parseNode(xercesc::DOMElement *node) {" << endl;
+        os << getBaseClassname() << "::parseNode(node);" << endl;
+        os << "}" << endl << endl;
     } else {
         os << "void " << className << "::appendChildren(xercesc::DOMElement *node) const {" << endl;
         
@@ -412,10 +422,10 @@ void Class::writeHeader(ostream& os) const {
 
             //getNamespace()
             os << "std::string getNamespace() const;" << endl;
-        } else {
-            os << "virtual void appendChildren(xercesc::DOMElement *node) const;" << endl;
-            os << "virtual void parseNode(xercesc::DOMElement *node);" << endl;
         }
+        
+        os << "void appendChildren(xercesc::DOMElement *node) const;" << endl;
+        os << "void parseNode(xercesc::DOMElement *node);" << endl;
 
         //clone()
         os << "boost::shared_ptr<" << className << "> clone() const;" << endl;

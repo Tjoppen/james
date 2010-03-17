@@ -91,11 +91,11 @@ public:
 };
 
 ostream& operator<< (ostream& os, const XMLDocument& doc) {
-    const XMLObject         *object = dynamic_cast<const XMLObject*>(&doc);
+    //const XMLObject         *object = dynamic_cast<const XMLObject*>(&doc);
     DOMImplementation       *implementation = DOMImplementationRegistry::getDOMImplementation(XercesString("LS"));
     DOMImplementationLS     *lsImplementation = dynamic_cast<DOMImplementationLS*>(implementation);
 
-    if(!object)             throw runtime_error(doc.getName() + " is not a sibling class of XMLObject");
+    //if(!object)             throw runtime_error(doc.getName() + " is not a sibling class of XMLObject");
     if(!implementation)     throw runtime_error("Failed to find a DOM implementation");
     if(!lsImplementation)   throw runtime_error("Failed to find a DOM LS implementation");
 
@@ -117,7 +117,7 @@ ostream& operator<< (ostream& os, const XMLDocument& doc) {
     root->setAttribute(XercesString("xmlns"), XercesString(doc.getNamespace()));
 
     //append the nodes of each member variable to the root element in a recursive fashion
-    object->appendChildren(root);
+    doc.appendChildren(root);
 
     //serialize directly to the ostream
     //we only need a scoped_ptr here
@@ -135,10 +135,10 @@ istream& operator>> (istream& is, XMLDocument& doc) {
     parser.setDoNamespaces(true);
     parser.parse(IStreamInputSource(is));
 
-    XMLObject       *object = dynamic_cast<XMLObject*>(&doc);
+    //XMLObject       *object = dynamic_cast<XMLObject*>(&doc);
     DOMDocument     *document = parser.getDocument();
 
-    if(!object)     throw runtime_error(doc.getName() + " is not a sibling class of XMLObject");
+    //if(!object)     throw runtime_error(doc.getName() + " is not a sibling class of XMLObject");
     if(!document)   throw runtime_error("Failed to parse document");
 
     DOMElement      *root = document->getDocumentElement();
@@ -149,7 +149,7 @@ istream& operator>> (istream& is, XMLDocument& doc) {
     if(!root->getLocalName() || XercesString(root->getLocalName()) != doc.getName())
         throw runtime_error("No local name for DOM document or supplied XML is not a " + doc.getName());
 
-    object->parseNode(root);
+    doc.parseNode(root);
 
     return is;
 }

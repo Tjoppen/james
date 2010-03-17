@@ -16,21 +16,7 @@ XERCES_CPP_NAMESPACE_BEGIN
 XERCES_CPP_NAMESPACE_END
 
 namespace james {
-    class XMLObject {
-    public:
-        XMLObject();
-        virtual ~XMLObject();
-
-        /**
-         * Should create and append all member variables specified in the schema as DOM nodes to the specified target node.
-         */
-        virtual void appendChildren(xercesc::DOMElement *node) const = 0;
-
-        /**
-         * Should parse the values contained in the specified node into the member variables.
-         */
-        virtual void parseNode(xercesc::DOMElement *node) = 0;
-    };
+    class XMLObject {};
 };
 
 #endif	/* _XMLOBJECT_H */
