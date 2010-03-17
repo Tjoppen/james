@@ -567,9 +567,15 @@ int main(int argc, char** argv) {
     nsLUT["xsl"] = XSL;
     nsLUT["xsd"] = XSL;
 
+    addClass(shared_ptr<Class>(new ByteClass));
+    addClass(shared_ptr<Class>(new UnsignedByteClass));
+    addClass(shared_ptr<Class>(new ShortClass));
+    addClass(shared_ptr<Class>(new UnsignedShortClass));
     addClass(shared_ptr<Class>(new IntClass));
+    addClass(shared_ptr<Class>(new UnsignedIntClass));
     addClass(shared_ptr<Class>(new IntegerClass));
     addClass(shared_ptr<Class>(new LongClass));
+    addClass(shared_ptr<Class>(new UnsignedLongClass));
     addClass(shared_ptr<Class>(new StringClass));
     addClass(shared_ptr<Class>(new AnyURIClass));
     addClass(shared_ptr<Class>(new FloatClass));

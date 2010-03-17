@@ -38,8 +38,14 @@ class name : public base {\
 public:\
     name() : base(override) {}
 
+GENERATE_BUILTIN(ByteClass, "byte", "char", "0")};
+GENERATE_BUILTIN(UnsignedByteClass, "unsignedByte", "unsigned char", "0")};
+GENERATE_BUILTIN(ShortClass, "short", "short", "0")};
+GENERATE_BUILTIN(UnsignedShortClass, "unsignedShort", "unsigned short", "0")};
 GENERATE_BUILTIN(IntClass, "int", "int", "0")};
+GENERATE_BUILTIN(UnsignedIntClass, "unsignedInt", "unsigned int", "0")};
 GENERATE_BUILTIN(LongClass, "long", "long", "0")};
+GENERATE_BUILTIN(UnsignedLongClass, "unsignedLong", "unsigned long", "0")};
 GENERATE_BUILTIN(StringClass, "string", "std::string", "std::string()")
     std::string getBaseHeader() const {
             return "<string>";
