@@ -545,85 +545,93 @@ static void diffAndReplace(string fileName, string newContents) {
 }
 
 int main(int argc, char** argv) {
-    if(argc <= 2) {
-        printUsage();
-        return 1;
-    }
+    try {
+        if(argc <= 2) {
+            printUsage();
+            return 1;
+        }
 
-    if(argc > 3 && !strcmp(argv[1], "-v")) {
-        verbose = true;
-        cerr << "Verbose mode" << endl;
+        if(argc > 3 && !strcmp(argv[1], "-v")) {
+            verbose = true;
+            cerr << "Verbose mode" << endl;
 
-        argv++;
-        argc--;
-    }
+            argv++;
+            argc--;
+        }
 
-    XMLPlatformUtils::Initialize();
+        XMLPlatformUtils::Initialize();
 
-    initKeywordSet();
+        initKeywordSet();
 
-    //HACKHACK: we should handle NS lookup properly
-    nsLUT["xs"] = XSL;
-    nsLUT["xsl"] = XSL;
-    nsLUT["xsd"] = XSL;
+        //HACKHACK: we should handle NS lookup properly
+        nsLUT["xs"] = XSL;
+        nsLUT["xsl"] = XSL;
+        nsLUT["xsd"] = XSL;
 
-    addClass(shared_ptr<Class>(new ByteClass));
-    addClass(shared_ptr<Class>(new UnsignedByteClass));
-    addClass(shared_ptr<Class>(new ShortClass));
-    addClass(shared_ptr<Class>(new UnsignedShortClass));
-    addClass(shared_ptr<Class>(new IntClass));
-    addClass(shared_ptr<Class>(new UnsignedIntClass));
-    addClass(shared_ptr<Class>(new IntegerClass));
-    addClass(shared_ptr<Class>(new LongClass));
-    addClass(shared_ptr<Class>(new UnsignedLongClass));
-    addClass(shared_ptr<Class>(new StringClass));
-    addClass(shared_ptr<Class>(new AnyURIClass));
-    addClass(shared_ptr<Class>(new FloatClass));
-    addClass(shared_ptr<Class>(new DoubleClass));
-    addClass(shared_ptr<Class>(new TimeClass));
-    addClass(shared_ptr<Class>(new DateClass));
-    addClass(shared_ptr<Class>(new DateTimeClass));
-    addClass(shared_ptr<Class>(new BooleanClass));
-    addClass(shared_ptr<Class>(new LanguageClass));
+        addClass(shared_ptr<Class>(new ByteClass));
+        addClass(shared_ptr<Class>(new UnsignedByteClass));
+        addClass(shared_ptr<Class>(new ShortClass));
+        addClass(shared_ptr<Class>(new UnsignedShortClass));
+        addClass(shared_ptr<Class>(new IntClass));
+        addClass(shared_ptr<Class>(new UnsignedIntClass));
+        addClass(shared_ptr<Class>(new IntegerClass));
+        addClass(shared_ptr<Class>(new LongClass));
+        addClass(shared_ptr<Class>(new UnsignedLongClass));
+        addClass(shared_ptr<Class>(new StringClass));
+        addClass(shared_ptr<Class>(new AnyURIClass));
+        addClass(shared_ptr<Class>(new FloatClass));
+        addClass(shared_ptr<Class>(new DoubleClass));
+        addClass(shared_ptr<Class>(new TimeClass));
+        addClass(shared_ptr<Class>(new DateClass));
+        addClass(shared_ptr<Class>(new DateTimeClass));
+        addClass(shared_ptr<Class>(new BooleanClass));
+        addClass(shared_ptr<Class>(new LanguageClass));
 
-    string outputDir = argv[1];
-    vector<string> schemaNames;
+        string outputDir = argv[1];
+        vector<string> schemaNames;
 
-    for(int x = 2; x < argc; x++)
-        schemaNames.push_back(argv[x]);
+        for(int x = 2; x < argc; x++)
+            schemaNames.push_back(argv[x]);
 
-    work(outputDir, schemaNames);
-    
-    if(verbose) cerr << "Everything seems to be in order. Writing/updating headers and implementations as needed." << endl;
+        work(outputDir, schemaNames);
 
-    //dump the appenders and parsers of all non-build-in classes
-    for(map<FullName, shared_ptr<Class> >::iterator it = classes.begin(); it != classes.end(); it++) {
-        if(!it->second->isBuiltIn()) {
-            if(!it->second->isSimple())
-            {
-                ostringstream name, implementation;
-                name << outputDir << "/" << it->first.second << ".cpp";
+        if(verbose) cerr << "Everything seems to be in order. Writing/updating headers and implementations as needed." << endl;
 
-                //write implementation to memory, then diff against the possibly existing file
-                it->second->writeImplementation(implementation);
+        //dump the appenders and parsers of all non-build-in classes
+        for(map<FullName, shared_ptr<Class> >::iterator it = classes.begin(); it != classes.end(); it++) {
+            if(!it->second->isBuiltIn()) {
+                if(!it->second->isSimple())
+                {
+                    ostringstream name, implementation;
+                    name << outputDir << "/" << it->first.second << ".cpp";
 
-                diffAndReplace(name.str(), implementation.str());
-            }
+                    //write implementation to memory, then diff against the possibly existing file
+                    it->second->writeImplementation(implementation);
 
-            {
-                ostringstream name, header;
-                name << outputDir << "/" << it->first.second << ".h";
+                    diffAndReplace(name.str(), implementation.str());
+                }
 
-                //write header to memory, then diff against the possibly existing file
-                it->second->writeHeader(header);
+                {
+                    ostringstream name, header;
+                    name << outputDir << "/" << it->first.second << ".h";
 
-                diffAndReplace(name.str(), header.str());
+                    //write header to memory, then diff against the possibly existing file
+                    it->second->writeHeader(header);
+
+                    diffAndReplace(name.str(), header.str());
+                }
             }
         }
+
+        XMLPlatformUtils::Terminate();
+
+        return 0;
+    } catch(const std::exception& e) {
+        cerr << "Caught exception: " << e.what() << endl;
+        return 1;
+    } catch(...) {
+        cerr << "Caught unknown exception" << endl;
+        return 1;
     }
-
-    XMLPlatformUtils::Terminate();
-
-    return 0;
 }
 
