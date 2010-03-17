@@ -81,3 +81,121 @@ string BuiltInClass::generateAttributeParser(string memberName, string attribute
 
     return oss.str();
 }
+
+/**
+ * ByteClass stuff
+ */
+string ByteClass::generateElementSetter(string memberName, string nodeName) const {
+    ostringstream oss;
+
+    oss << "{" << endl;
+    oss << "stringstream ss;" << endl;
+    oss << "string converted;" << endl;
+    oss << "ss << (int)" << memberName << ";" << endl;
+    oss << "ss >> converted;" << endl;
+    oss << nodeName << "->setTextContent(XercesString(converted));" << endl;
+    oss << "}" << endl;
+
+    return oss.str();
+}
+
+string ByteClass::generateAttributeSetter(string memberName, string attributeName) const {
+    ostringstream oss;
+
+    oss << "{" << endl;
+    oss << "stringstream ss;" << endl;
+    oss << "string converted;" << endl;
+    oss << "ss << (int)" << memberName << ";" << endl;
+    oss << "ss >> converted;" << endl;
+    oss << attributeName << "->setValue(XercesString(converted));" << endl;
+    oss << "}" << endl;
+
+    return oss.str();
+}
+
+string ByteClass::generateMemberSetter(string memberName, string nodeName) const {
+    ostringstream oss;
+
+    oss << "{" << endl;
+    oss << "stringstream ss;" << endl;
+    oss << "int temp;" << endl;
+    oss << "ss << XercesString(" << nodeName << "->getTextContent());" << endl;
+    oss << "ss >> temp;" << endl;
+    oss << memberName << " = temp;" << endl;
+    oss << "}" << endl;
+
+    return oss.str();
+}
+
+string ByteClass::generateAttributeParser(string memberName, string attributeName) const {
+    ostringstream oss;
+
+    oss << "{" << endl;
+    oss << "stringstream ss;" << endl;
+    oss << "int temp;" << endl;
+    oss << "ss << XercesString(" << attributeName << "->getValue());" << endl;
+    oss << "ss >> temp;" << endl;
+    oss << memberName << " = temp;" << endl;
+    oss << "}" << endl;
+
+    return oss.str();
+}
+
+/**
+ * UnsignedByteClass stuff
+ */
+string UnsignedByteClass::generateElementSetter(string memberName, string nodeName) const {
+    ostringstream oss;
+
+    oss << "{" << endl;
+    oss << "stringstream ss;" << endl;
+    oss << "string converted;" << endl;
+    oss << "ss << (unsigned int)" << memberName << ";" << endl;
+    oss << "ss >> converted;" << endl;
+    oss << nodeName << "->setTextContent(XercesString(converted));" << endl;
+    oss << "}" << endl;
+
+    return oss.str();
+}
+
+string UnsignedByteClass::generateAttributeSetter(string memberName, string attributeName) const {
+    ostringstream oss;
+
+    oss << "{" << endl;
+    oss << "stringstream ss;" << endl;
+    oss << "string converted;" << endl;
+    oss << "ss << (unsigned int)" << memberName << ";" << endl;
+    oss << "ss >> converted;" << endl;
+    oss << attributeName << "->setValue(XercesString(converted));" << endl;
+    oss << "}" << endl;
+
+    return oss.str();
+}
+
+string UnsignedByteClass::generateMemberSetter(string memberName, string nodeName) const {
+    ostringstream oss;
+
+    oss << "{" << endl;
+    oss << "stringstream ss;" << endl;
+    oss << "unsigned int temp;" << endl;
+    oss << "ss << XercesString(" << nodeName << "->getTextContent());" << endl;
+    oss << "ss >> temp;" << endl;
+    oss << memberName << " = temp;" << endl;
+    oss << "}" << endl;
+
+    return oss.str();
+}
+
+string UnsignedByteClass::generateAttributeParser(string memberName, string attributeName) const {
+    ostringstream oss;
+
+    oss << "{" << endl;
+    oss << "stringstream ss;" << endl;
+    oss << "unsigned int temp;" << endl;
+    oss << "ss << XercesString(" << attributeName << "->getValue());" << endl;
+    oss << "ss >> temp;" << endl;
+    oss << memberName << " = temp;" << endl;
+    oss << "}" << endl;
+
+    return oss.str();
+}

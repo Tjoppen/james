@@ -38,8 +38,21 @@ class name : public base {\
 public:\
     name() : base(override) {}
 
-GENERATE_BUILTIN(ByteClass, "byte", "char", "0")};
-GENERATE_BUILTIN(UnsignedByteClass, "unsignedByte", "unsigned char", "0")};
+GENERATE_BUILTIN(ByteClass, "byte", "char", "0")
+    virtual std::string generateElementSetter(std::string memberName, std::string nodeName) const;
+    virtual std::string generateAttributeSetter(std::string memberName, std::string attributeName) const;
+    virtual std::string generateMemberSetter(std::string memberName, std::string nodeName) const;
+    virtual std::string generateAttributeParser(std::string memberName, std::string attributeName) const;
+};
+
+GENERATE_BUILTIN(UnsignedByteClass, "unsignedByte", "unsigned char", "0")
+    virtual std::string generateElementSetter(std::string memberName, std::string nodeName) const;
+    virtual std::string generateAttributeSetter(std::string memberName, std::string attributeName) const;
+    virtual std::string generateMemberSetter(std::string memberName, std::string nodeName) const;
+    virtual std::string generateAttributeParser(std::string memberName, std::string attributeName) const;
+};
+
+
 GENERATE_BUILTIN(ShortClass, "short", "short", "0")};
 GENERATE_BUILTIN(UnsignedShortClass, "unsignedShort", "unsigned short", "0")};
 GENERATE_BUILTIN(IntClass, "int", "int", "0")};
