@@ -198,49 +198,6 @@ string Class::generateAttributeParser(string memberName, string attributeName) c
     throw runtime_error("Tried to generateAttributeParser() for a non-simple Class");
 }
 
-string Class::generateInsertClones() const {
-    //TODO: implement generateCloner()
-    ostringstream oss;
-    ClassName className = name.second;
-
-    for(list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
-        string name = it->name;
-        string sourceName = "this->" + it->name;
-        string targetName = "ret->" + it->name;
-        
-        if(it->isArray()) {
-            sourceName = "(*it)";
-            targetName = "temp";
-            oss << "for(" << it->getType() << "::const_iterator it = " << name << ".begin(); it != " << name << ".end(); it++) {" << endl;
-            oss << it->cl->getClassType() << " " << it->cl->generateMemberCloner(targetName, sourceName) << endl;
-            oss << "ret->" << it->name << ".push_back(temp);" << endl;
-            oss << "}" << endl;
-        } else {
-            if(!it->isRequired()) {
-                //insert a non-null check
-                oss << "if(" << it->cl->getTester(name) << ") {" << endl;
-            }
-
-            oss << it->cl->generateMemberCloner(targetName, sourceName) << endl;
-
-            if(!it->isRequired()) {
-                oss << "}" << endl;
-            }
-        }
-    }
-
-    return oss.str();
-}
-
-string Class::generateMemberCloner(string cloneName, string memberName) const {
-    if(base)
-        return base->generateMemberCloner(cloneName, memberName);
-    else if(isBuiltIn())
-        return cloneName + " = " + memberName + ";";
-    else
-        return cloneName + " = " + memberName + "->clone();";
-}
-
 string Class::getClassname() const {
     if(isSimple() && base)
         return base->getClassname();
@@ -299,77 +256,64 @@ void Class::writeImplementation(ostream& os) const {
     os << "}" << endl << endl;
 
     //method implementations
-    if(isDocument) {
-        //unmarshalling constructors
+    //unmarshalling constructors
+    if(base)
         os << className << "::" << className << "(std::istream& is) : " << base->getClassname() << "() {" << endl;
-        os << "is >> *this;" << endl;
-        os << "}" << endl;
+    else
+        os << className << "::" << className << "(std::istream& is) {" << endl;
 
-        os << className << "::" << className << "(const std::string& str) : " << base->getClassname() << "() {" << endl;
-        os << "istringstream iss(str);" << endl;
-        os << "iss >> *this;" << endl;
-        os << "}" << endl;
-
-        //string cast operator
-        os << className << "::operator std::string () const {" << endl;
-        os << "ostringstream oss;" << endl;
-        os << "oss << *this;" << endl;
-        os << "return oss.str();" << endl;
-        os << "}" << endl;
-
-        //getName()
-        os << "std::string " << className << "::getName() const {" << endl;
-        os << "return \"" << className << "\";" << endl;
-        os << "}" << endl;
-
-        //getNamespace()
-        os << "std::string " << className << "::getNamespace() const {" << endl;
-        os << "return \"" << name.first << "\";" << endl;
-        os << "}" << endl;
-
-        //appendChildren()
-        os << "void " << className << "::appendChildren(xercesc::DOMElement *node) const {" << endl;
-        os << base->getClassname() << "::appendChildren(node);" << endl;
-        os << "}" << endl;
-
-        //parseNode()
-        os << "void " << className << "::parseNode(xercesc::DOMElement *node) {" << endl;
-        os << base->getClassname() << "::parseNode(node);" << endl;
-        os << "}" << endl << endl;
-    } else {
-        os << "void " << className << "::appendChildren(xercesc::DOMElement *node) const {" << endl;
-        
-        //call base appender
-        if(base && !base->isSimple())
-            os << base->getClassname() << "::appendChildren(node);" << endl;
-
-        os << generateAppender() << endl;
-        os << "}" << endl << endl;
-
-        os << "void " << className << "::parseNode(xercesc::DOMElement *node) {" << endl;
-        os << generateParser() << endl;
-        os << "}" << endl << endl;
-    }
-
-    //clone()
-    os << "boost::shared_ptr<" << className << "> " << className << "::clone() const {" << endl;
-    os << "boost::shared_ptr<" << className << "> ret(new " << className << ");" << endl;
+    os << "is >> *this;" << endl;
+    os << "}" << endl;
 
     if(base)
-        os << base->name.second << "::insertClones(ret);" << endl;
+        os << className << "::" << className << "(const std::string& str) : " << base->getClassname() << "() {" << endl;
+    else
+        os << className << "::" << className << "(const std::string& str) {" << endl;
 
-    os << "insertClones(ret);" << endl;
-    os << "return ret;" << endl;
+    os << "istringstream iss(str);" << endl;
+    os << "iss >> *this;" << endl;
     os << "}" << endl;
 
-    //insertClones()
-    os << "void " << className << "::insertClones(boost::shared_ptr<" << className << "> ret) const {" << endl;
-    os << generateInsertClones() << endl;
+    //string cast operator
+    os << className << "::operator std::string () const {" << endl;
+    os << "ostringstream oss;" << endl;
+    os << "oss << *this;" << endl;
+    os << "return oss.str();" << endl;
     os << "}" << endl;
+
+    //getName()
+    os << "std::string " << className << "::getName() const {" << endl;
+    os << "return \"" << className << "\";" << endl;
+    os << "}" << endl;
+
+    //getNamespace()
+    os << "std::string " << className << "::getNamespace() const {" << endl;
+    os << "return \"" << name.first << "\";" << endl;
+    os << "}" << endl;
+
+    os << "void " << className << "::appendChildren(xercesc::DOMElement *node) const {" << endl;
+
+    //call base appender
+    if(base && !base->isSimple())
+        os << base->getClassname() << "::appendChildren(node);" << endl;
+
+    os << generateAppender() << endl;
+    os << "}" << endl << endl;
+
+    os << "void " << className << "::parseNode(xercesc::DOMElement *node) {" << endl;
+    os << generateParser() << endl;
+    os << "}" << endl << endl;
 
     //cast operator
     os << className << "::operator boost::shared_ptr<" << className << "> () const {" << endl;
     os << "return boost::shared_ptr<" << className << ">(new " << className << "(*this));" << endl;
+    os << "}" << endl;
+
+    //clone()
+    os << "boost::shared_ptr<" << className << "> " << className << "::clone() const {" << endl;
+    os << "stringstream ss;" << endl;
+    os << "ss << *this;" << endl;
+    os << "return boost::shared_ptr<" << className<< ">(new " << className << "(ss));" << endl;
     os << "}" << endl;
 }
 
@@ -394,6 +338,8 @@ void Class::writeHeader(ostream& os) const {
     } else {
         if(base)
             os << "#include " << getBaseHeader() << endl;
+        else
+            os << "#include \"XMLObject.h\"" << endl;
 
         if(isDocument)
             os << "#include \"XMLDocument.h\"" << endl;
@@ -404,11 +350,11 @@ void Class::writeHeader(ostream& os) const {
                 os << "class " << it->cl->getClassname() << ";" << endl;
 
         if(isDocument)
-            os << "class " << className << " : public " << base->getClassname() << ", public james::XMLDocument" << endl;
+            os << "class " << className << " : public " << base->getClassname() << ", public james::XMLDocument";
         else if(base)
             os << "class " << className << " : public " << base->getClassname();
         else
-            os << "class " << className;
+            os << "class " << className << " : public james::XMLObject";
         
         os << " {" << endl;
         os << "public:" << endl;
@@ -416,35 +362,27 @@ void Class::writeHeader(ostream& os) const {
         os << className << "();" << endl;
 
         //prototypes
-        if(isDocument) {
-            //add constructor for unmarshalling this document from an istream of string
-            os << className << "(std::istream& is);" << endl;
-            os << className << "(const std::string& str);" << endl;
+        //add constructor for unmarshalling this document from an istream of string
+        os << className << "(std::istream& is);" << endl;
+        os << className << "(const std::string& str);" << endl;
 
-            //string cast operator
-            os << "operator std::string () const;" << endl;
+        //string cast operator
+        os << "operator std::string () const;" << endl;
 
-            //getName()
-            os << "std::string getName() const;" << endl;
+        //getName()
+        os << "std::string getName() const;" << endl;
 
-            //getNamespace()
-            os << "std::string getNamespace() const;" << endl;
-        }
+        //getNamespace()
+        os << "std::string getNamespace() const;" << endl;
         
         os << "void appendChildren(xercesc::DOMElement *node) const;" << endl;
         os << "void parseNode(xercesc::DOMElement *node);" << endl;
 
-        //clone()
-        os << "boost::shared_ptr<" << className << "> clone() const;" << endl;
-
         //cast operator
         os << "operator boost::shared_ptr<" << className << "> () const;" << endl;
 
-        //insertClones()
-        os << "protected:" << endl;
-        os << "void insertClones(boost::shared_ptr<" << className << "> ret) const;" << endl;
-
-        os << "public:" << endl;
+        //clone()
+        os << "boost::shared_ptr<" << className << "> clone() const;" << endl;
 
         //members
         for(list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {

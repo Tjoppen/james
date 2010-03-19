@@ -97,16 +97,6 @@ public:
     virtual std::string generateAttributeParser(std::string memberName, std::string attributeName) const;
 
     /**
-     * Should return a code fragment that clones all members of this Class into "ret".
-     */
-    virtual std::string generateInsertClones() const;
-
-    /**
-     * Should return a code fragment that clones an instance of this class with the specified name.
-     */
-    virtual std::string generateMemberCloner(std::string cloneName, std::string memberName) const;
-
-    /**
      * Should return the name with which to refer to this Class.
      */
     virtual std::string getClassname() const;
