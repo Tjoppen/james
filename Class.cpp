@@ -79,9 +79,10 @@ string Class::generateAppender() const {
         if(it->isArray()) {
             setterName = "(*it)";
             oss << "for(" << it->getType() << "::const_iterator it = " << name << ".begin(); it != " << name << ".end(); it++) {" << endl;
-        } else if(!it->isRequired()) {
+        } else if(it->isOptional()) {
             //insert a non-null check
-            oss << "if(" << it->cl->getTester(name) << ") {" << endl;
+            setterName += ".get()";
+            oss << "if(" << name << ") {" << endl;
         } else {
             //required member - check for its existance
         }
@@ -98,7 +99,7 @@ string Class::generateAppender() const {
             oss << "node->appendChild(" << nodeName << ");" << endl;
         }
         
-        if(it->isArray() || !it->isRequired())
+        if(it->isArray() || it->isOptional())
             oss << "}" << endl;
 
         oss << endl;
@@ -152,6 +153,10 @@ string Class::generateParser() const {
             } else if(!it->cl->isSimple()) {
                 //add check and allocation of shared_ptr
                 oss << "if(!" << memberName << ") " << memberName << " = boost::shared_ptr<" << it->cl->getClassname() << ">(new " << it->cl->getClassname() << ");" << endl;
+            } else if(it->isOptional()) {
+                //optional and simple - parse to temp var before setting
+                memberName = "temp";
+                oss << it->cl->getClassType() << " " << memberName << ";" << endl;
             }
 
             oss << "DOMElement *childElement = dynamic_cast<DOMElement*>(child);" << endl;
@@ -159,6 +164,8 @@ string Class::generateParser() const {
 
             if(it->isArray()) {
                 oss << it->name << ".push_back(" << memberName << ");" << endl;
+            } else if(it->isOptional() && it->cl->isSimple()) {
+                oss << it->name << " = " << memberName << ";" << endl;
             }
 
             oss << "}" << endl;
@@ -172,7 +179,21 @@ string Class::generateParser() const {
         if(it->isAttribute) {
             oss << "if(node->hasAttribute(XercesString(\"" << it->name << "\"))) {" << endl;
             oss << "DOMAttr *attributeNode = node->getAttributeNode(XercesString(\"" << it->name << "\"));" << endl;
-            oss << it->cl->generateAttributeParser(it->name, "attributeNode") << endl;
+
+            string attributeName = it->name;
+
+            if(it->isOptional()) {
+                attributeName = "temp";
+                oss << it->cl->getClassType() << " " << attributeName << ";" << endl;
+            }
+
+
+            oss << it->cl->generateAttributeParser(attributeName, "attributeNode") << endl;
+
+            if(it->isOptional()) {
+                oss << it->name << " = " << attributeName << ";" << endl;
+            }
+
             oss << "}" << endl;
         }
     }
@@ -248,11 +269,6 @@ void Class::writeImplementation(ostream& os) const {
     else
         os << className << "::" << className << "() {";
     
-    //give all basic optional members a default value of zero
-    for(list<Member>::const_iterator it = members.begin(); it != members.end(); it++)
-        if(!it->isArray() && !it->isRequired() && it->cl->isSimple())
-            os << it->name << " = " << it->cl->getDefaultValue() << ";" << endl;
-
     os << "}" << endl << endl;
 
     //method implementations
@@ -329,9 +345,10 @@ void Class::writeHeader(ostream& os) const {
         os << "#include <istream>" << endl;
 
     os << "#include <boost/shared_ptr.hpp>" << endl;
+    os << "#include <boost/optional.hpp>" << endl;
     os << "#include <xercesc/util/XercesDefs.hpp>" << endl;
     os << "XERCES_CPP_NAMESPACE_BEGIN class DOMElement; XERCES_CPP_NAMESPACE_END" << endl;
-
+    
     //simple types only need a typedef
     if(isSimple()) {
         os << "typedef " << base->getClassname() << " " << name.second << ";" << endl;
@@ -386,7 +403,15 @@ void Class::writeHeader(ostream& os) const {
 
         //members
         for(list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
-            os << it->getType() << " " << it->name << ";" << endl;
+            if(it->isOptional() && it->cl->isSimple())
+                os << "boost::optional<";
+
+            os << it->getType();
+
+            if(it->isOptional() && it->cl->isSimple())
+                os << " >";
+
+            os << " " << it->name << ";" << endl;
         }
 
         os << "};" << endl;
@@ -399,8 +424,8 @@ bool Class::Member::isArray() const {
     return maxOccurs > 1 || maxOccurs == UNBOUNDED;
 }
 
-bool Class::Member::isRequired() const {
-    return minOccurs >= 1;
+bool Class::Member::isOptional() const {
+    return minOccurs == 0 && maxOccurs == 1;
 }
 
 string Class::Member::getType() const {
@@ -409,18 +434,4 @@ string Class::Member::getType() const {
         return "std::vector<" + cl->getClassType() + " >";
     } else
         return cl->getClassType();
-}
-
-string Class::getDefaultValue() const {
-    if(isSimple() && base)
-        return base->getDefaultValue();
-    
-    return "boost::shared_ptr<" + name.second + ">()";
-}
-
-string Class::getTester(string name) const {
-    if(isSimple() && base)
-        return base->getTester(name);
-
-    return name;
 }

@@ -31,7 +31,7 @@ public:
         bool isAttribute;   //true if this member is an attribute rather than an element
 
         bool isArray() const;
-        bool isRequired() const;
+        bool isOptional() const;    //returns true if this member is optional (not an array)
 
         std::string getType() const;
     };
@@ -113,16 +113,6 @@ public:
      *  complex types ("ExampleType" -> shared_ptr<ExampleType>)
      */
     std::string getClassType() const;
-
-    /**
-     * Should return a working default value with which to initialize an instance of the class.
-     */
-    virtual std::string getDefaultValue() const;
-
-    /**
-     * Should return a code fragment that tests whether the member of the specified name has been set.
-     */
-    virtual std::string getTester(std::string name) const;
 
     void writeImplementation(std::ostream& os) const;
     void writeHeader(std::ostream& os) const;
