@@ -89,7 +89,8 @@ public:
 };
 
 ostream& james::marshal(ostream& os, const XMLObject& obj, void (XMLObject::*appendChildren)(xercesc::DOMElement*) const, string documentName, string nameSpace) {
-    DOMImplementation       *implementation = DOMImplementationRegistry::getDOMImplementation(XercesString("LS"));
+    XercesString ls("LS"), xmlns("xmlns");
+    DOMImplementation       *implementation = DOMImplementationRegistry::getDOMImplementation(ls);
     DOMImplementationLS     *lsImplementation = dynamic_cast<DOMImplementationLS*>(implementation);
 
     if(!implementation)     throw runtime_error("Failed to find a DOM implementation");
@@ -102,7 +103,8 @@ ostream& james::marshal(ostream& os, const XMLObject& obj, void (XMLObject::*app
 
     //get name of root element and create new DOM dodument
     //shared_ptr + deleter -> exception safety
-    boost::shared_ptr<DOMDocument> document(implementation->createDocument(0, XercesString(documentName), 0), DocumentDeleter());
+    XercesString documentNameString(documentName);
+    boost::shared_ptr<DOMDocument> document(implementation->createDocument(0, documentNameString, 0), DocumentDeleter());
 
     if(!document)           throw runtime_error("Failed to create DOM document");
 
@@ -110,7 +112,8 @@ ostream& james::marshal(ostream& os, const XMLObject& obj, void (XMLObject::*app
 
     if(!root)               throw runtime_error("Failed failed to get DOM document element");
 
-    root->setAttribute(XercesString("xmlns"), XercesString(nameSpace));
+    XercesString nameSpaceString(nameSpace);
+    root->setAttribute(xmlns, nameSpaceString);
 
     //append the nodes of each member variable to the root element in a recursive fashion
     (obj.*appendChildren)(root);
@@ -140,8 +143,12 @@ istream& james::unmarshal(istream& is, XMLObject& obj, void (XMLObject::*parseNo
     if(!root)       throw runtime_error("Failed to get document root");
 
     //check that the name of the root node matches the name of the XMLDocument
-    if(!root->getLocalName() || XercesString(root->getLocalName()) != name)
-        throw runtime_error("No local name for DOM document or supplied XML is not a " + name);
+    if(!root->getLocalName())
+        throw runtime_error("No local name for DOM document (expected " + name + ")");
+
+    XercesString rootName(root->getLocalName());
+    if(rootName != name)
+        throw runtime_error("Supplied XML (" + (string)rootName + ") is not a " + name);
 
     (obj.*parseNode)(root);
 

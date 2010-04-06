@@ -64,11 +64,11 @@ GENERATE_BUILTIN(StringClass, "string", "std::string")
     }
 
     std::string generateElementSetter(std::string memberName, std::string nodeName) const {
-        return nodeName + "->setTextContent(XercesString(" + memberName + "));";
+        return "{ XercesString temp(" + memberName + "); " + nodeName + "->setTextContent(temp); }";
     }
 
     std::string generateAttributeSetter(std::string memberName, std::string attributeName) const {
-        return attributeName + "->setValue(XercesString(" + memberName + "));";
+        return "{ XercesString temp(" + memberName + "); " + attributeName + "->setValue(temp); }";
     }
 
     std::string generateMemberSetter(std::string memberName, std::string nodeName) const {
@@ -85,11 +85,11 @@ GENERATE_BUILTIN(DoubleClass, "double", "double")};
 
 GENERATE_BUILTIN(BooleanClass, "boolean", "bool")
     std::string generateElementSetter(std::string memberName, std::string nodeName) const {
-        return nodeName + "->setTextContent(XercesString(" + memberName + " ? \"true\" : \"false\"));";
+        return "{ XercesString temp(" + memberName + " ? \"true\" : \"false\"); " + nodeName + "->setTextContent(temp); }";
     }
 
     std::string generateAttributeSetter(std::string memberName, std::string attributeName) const {
-        return attributeName + "->setValue(XercesString(" + memberName + " ? \"true\" : \"false\"));";
+        return "{ XercesString temp(" + memberName + " ? \"true\" : \"false\"); " + attributeName + "->setValue(temp); }";
     }
 
     std::string generateMemberSetter(std::string memberName, std::string nodeName) const {

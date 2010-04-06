@@ -78,31 +78,32 @@ string Class::generateAppender() const {
 
         if(it->isArray()) {
             setterName = "(*it)";
-            oss << "for(" << it->getType() << "::const_iterator it = " << name << ".begin(); it != " << name << ".end(); it++) {" << endl;
+            oss << "for(" << it->getType() << "::const_iterator it = " << name << ".begin(); it != " << name << ".end(); it++)" << endl;
         } else if(it->isOptional()) {
             //insert a non-null check
             setterName += ".get()";
-            oss << "if(" << name << ") {" << endl;
+            oss << "if(" << name << ")" << endl;
         } else {
             //required member - check for its existance
         }
 
+        oss << "{" << endl;
+
         if(it->isAttribute) {
             //attribute
-            oss << "DOMAttr *" << nodeName << " = node->getOwnerDocument()->createAttribute(XercesString(\"" << name << "\"));" << endl;
+            oss << "XercesString temp(\"" << name << "\");" << endl;
+            oss << "DOMAttr *" << nodeName << " = node->getOwnerDocument()->createAttribute(temp);" << endl;
             oss << it->cl->generateAttributeSetter(setterName, nodeName) << endl;
             oss << "node->setAttributeNode(" << nodeName << ");" << endl;
         } else {
             //element
-            oss << "DOMElement *" << nodeName << " = node->getOwnerDocument()->createElement(XercesString(\"" << name << "\"));" << endl;
+            oss << "XercesString temp(\"" << name << "\");" << endl;
+            oss << "DOMElement *" << nodeName << " = node->getOwnerDocument()->createElement(temp);" << endl;
             oss << it->cl->generateElementSetter(setterName, nodeName) << endl;
             oss << "node->appendChild(" << nodeName << ");" << endl;
         }
-        
-        if(it->isArray() || it->isOptional())
-            oss << "}" << endl;
 
-        oss << endl;
+        oss << "}" << endl;
     }
 
     return oss.str();
@@ -177,8 +178,10 @@ string Class::generateParser() const {
     //attributes
     for(std::list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
         if(it->isAttribute) {
-            oss << "if(node->hasAttribute(XercesString(\"" << it->name << "\"))) {" << endl;
-            oss << "DOMAttr *attributeNode = node->getAttributeNode(XercesString(\"" << it->name << "\"));" << endl;
+            oss << "{" << endl;
+            oss << "XercesString temp(\"" << it->name << "\");" << endl;
+            oss << "if(node->hasAttribute(temp)) {" << endl;
+            oss << "DOMAttr *attributeNode = node->getAttributeNode(temp);" << endl;
 
             string attributeName = it->name;
 
@@ -194,7 +197,7 @@ string Class::generateParser() const {
                 oss << it->name << " = " << attributeName << ";" << endl;
             }
 
-            oss << "}" << endl;
+            oss << "}" << endl << "}" << endl;
         }
     }
 
