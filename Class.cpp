@@ -141,7 +141,7 @@ string Class::generateParser() const {
 
             string memberName = it->name;
             if(it->isArray()) {
-                memberName = "temp";
+                memberName += "Temp";
                 oss << it->cl->getClassType() << " " << memberName;
 
                 if(it->cl->isSimple()) {
@@ -156,7 +156,7 @@ string Class::generateParser() const {
                 oss << "if(!" << memberName << ") " << memberName << " = boost::shared_ptr<" << it->cl->getClassname() << ">(new " << it->cl->getClassname() << ");" << endl;
             } else if(it->isOptional()) {
                 //optional and simple - parse to temp var before setting
-                memberName = "temp";
+                memberName += "Temp";
                 oss << it->cl->getClassType() << " " << memberName << ";" << endl;
             }
 
@@ -186,7 +186,7 @@ string Class::generateParser() const {
             string attributeName = it->name;
 
             if(it->isOptional()) {
-                attributeName = "temp";
+                attributeName += "Temp";
                 oss << it->cl->getClassType() << " " << attributeName << ";" << endl;
             }
 
