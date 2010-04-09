@@ -16,7 +16,12 @@
 #include <xercesc/dom/DOMImplementationLS.hpp>
 #include <xercesc/dom/DOMDocument.hpp>
 #include <xercesc/dom/DOMElement.hpp>
+#ifdef USE_XERCES_C_28
 #include <xercesc/dom/DOMWriter.hpp>
+#else
+#include <xercesc/dom/DOMLSSerializer.hpp>
+#include <xercesc/dom/DOMLSOutput.hpp>
+#endif
 #include <xercesc/util/XMLString.hpp>
 #include <xercesc/parsers/XercesDOMParser.hpp>
 #include <xercesc/util/BinInputStream.hpp>
@@ -39,15 +44,30 @@ class IStreamInputSource : public InputSource {
         IStreamBinInputStream(istream &is) : BinInputStream(), is(is) {
         }
 
+#ifdef USE_XERCES_C_28
         unsigned int curPos(void) const {
+#else
+        XMLFilePos curPos(void) const {
+#endif
             return is.tellg();
         }
 
+#ifdef USE_XERCES_C_28
         unsigned int readBytes(XMLByte* const buf, const unsigned int max) {
+#else
+        XMLSize_t readBytes(XMLByte* const buf, const XMLSize_t max) {
+#endif
             is.read((char*)buf, max);
 
             return is.gcount();
         }
+
+#ifndef USE_XERCES_C_28
+        const XMLCh* getContentType() const {
+            //TODO: return application/xml
+            return NULL;
+        }
+#endif
     };
 public:
     IStreamInputSource(istream &is) : InputSource(), is(is) {
@@ -68,23 +88,20 @@ public:
     OstreamFormatTarget(ostream& os) : os(os) {
     }
 
+#ifdef USE_XERCES_C_28
     void writeChars(const XMLByte* const toWrite, const unsigned int count, XMLFormatter* const formatter) {
+#else
+    void writeChars(const XMLByte* const toWrite, const XMLSize_t count, XMLFormatter* const formatter) {
+#endif
         os.write((const char*)toWrite, count);
     }
 };
 
-//deleters
-class WriterDeleter {
+//Generic deleter that calls T::release(). Works for a lot of classes in Xerces-C++
+template<class T> class Releaser {
 public:
-    void operator () (DOMWriter *writer) {
-        writer->release();
-    }
-};
-
-class DocumentDeleter {
-public:
-    void operator () (DOMDocument *document) {
-        document->release();
+    void operator () (T *t) {
+        t->release();
     }
 };
 
@@ -97,14 +114,24 @@ ostream& james::marshal(ostream& os, const XMLObject& obj, void (XMLObject::*app
     if(!lsImplementation)   throw runtime_error("Failed to find a DOM LS implementation");
 
     //shared_ptr + deleter -> exception safety
-    boost::shared_ptr<DOMWriter> writer(lsImplementation->createDOMWriter(), WriterDeleter());
+#ifdef USE_XERCES_C_28
+    boost::shared_ptr<DOMWriter> writer(lsImplementation->createDOMWriter(), Releaser<DOMWriter>());
 
     if(!writer)             throw runtime_error("Failed to create DOM writer");
+#else
+    boost::shared_ptr<DOMLSSerializer> serializer(lsImplementation->createLSSerializer(), Releaser<DOMLSSerializer>());
+
+    if(!serializer)         throw runtime_error("Failed to create DOM LS serializer");
+
+    boost::shared_ptr<DOMLSOutput> output(lsImplementation->createLSOutput(), Releaser<DOMLSOutput>());
+
+    if(!output)             throw runtime_error("Failed to create DOM LS output");
+#endif
 
     //get name of root element and create new DOM dodument
     //shared_ptr + deleter -> exception safety
     XercesString documentNameString(documentName);
-    boost::shared_ptr<DOMDocument> document(implementation->createDocument(0, documentNameString, 0), DocumentDeleter());
+    boost::shared_ptr<DOMDocument> document(implementation->createDocument(0, documentNameString, 0), Releaser<DOMDocument>());
 
     if(!document)           throw runtime_error("Failed to create DOM document");
 
@@ -122,7 +149,12 @@ ostream& james::marshal(ostream& os, const XMLObject& obj, void (XMLObject::*app
     //we only need a scoped_ptr here
     boost::scoped_ptr<OstreamFormatTarget> target(new OstreamFormatTarget(os));
 
+#ifdef USE_XERCES_C_28
     writer->writeNode(target.get(), *document);
+#else
+    output->setByteStream(target.get());
+    serializer->write(document.get(), output.get());
+#endif
 
     return os;
 }
