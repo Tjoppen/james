@@ -64,11 +64,11 @@ GENERATE_BUILTIN(StringClass, "string", "std::string")
     }
 
     std::string generateElementSetter(std::string memberName, std::string nodeName) const {
-        return "{ XercesString temp(" + memberName + "); " + nodeName + "->setTextContent(temp); }";
+        return "{ XercesString " + tempWithPostfix + "(" + memberName + "); " + nodeName + "->setTextContent(" + tempWithPostfix + "); }";
     }
 
     std::string generateAttributeSetter(std::string memberName, std::string attributeName) const {
-        return "{ XercesString temp(" + memberName + "); " + attributeName + "->setValue(temp); }";
+        return "{ XercesString " + tempWithPostfix + "(" + memberName + "); " + attributeName + "->setValue(" + tempWithPostfix + "); }";
     }
 
     std::string generateMemberSetter(std::string memberName, std::string nodeName) const {
@@ -85,11 +85,11 @@ GENERATE_BUILTIN(DoubleClass, "double", "double")};
 
 GENERATE_BUILTIN(BooleanClass, "boolean", "bool")
     std::string generateElementSetter(std::string memberName, std::string nodeName) const {
-        return "{ XercesString temp(" + memberName + " ? \"true\" : \"false\"); " + nodeName + "->setTextContent(temp); }";
+        return "{ XercesString " + tempWithPostfix + "(" + memberName + " ? \"true\" : \"false\"); " + nodeName + "->setTextContent(" + tempWithPostfix + "); }";
     }
 
     std::string generateAttributeSetter(std::string memberName, std::string attributeName) const {
-        return "{ XercesString temp(" + memberName + " ? \"true\" : \"false\"); " + attributeName + "->setValue(temp); }";
+        return "{ XercesString " + tempWithPostfix + "(" + memberName + " ? \"true\" : \"false\"); " + attributeName + "->setValue(" + tempWithPostfix + "); }";
     }
 
     std::string generateMemberSetter(std::string memberName, std::string nodeName) const {
@@ -97,8 +97,8 @@ GENERATE_BUILTIN(BooleanClass, "boolean", "bool")
 
         oss << "{" << std::endl;
         oss << "//TODO: Strip string prior to this?" << std::endl;
-        oss << "XercesString temp(" << nodeName << "->getTextContent());" << std::endl;
-        oss << memberName << " = temp == \"true\" || temp == \"1\";" << std::endl;
+        oss << "XercesString " << tempWithPostfix << "(" << nodeName << "->getTextContent());" << std::endl;
+        oss << memberName << " = " << tempWithPostfix << " == \"true\" || " << tempWithPostfix << " == \"1\";" << std::endl;
         oss << "}" << std::endl;
 
         return oss.str();
@@ -109,8 +109,8 @@ GENERATE_BUILTIN(BooleanClass, "boolean", "bool")
 
         oss << "{" << std::endl;
         oss << "//TODO: Strip string prior to this?" << std::endl;
-        oss << "XercesString temp(" << attributeName << "->getValue());" << std::endl;
-        oss << memberName << " = temp == \"true\" || temp == \"1\";" << std::endl;
+        oss << "XercesString " << tempWithPostfix << "(" << attributeName << "->getValue());" << std::endl;
+        oss << memberName << " = " << tempWithPostfix << " == \"true\" || " << tempWithPostfix << " == \"1\";" << std::endl;
         oss << "}" << std::endl;
 
         return oss.str();

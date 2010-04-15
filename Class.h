@@ -19,6 +19,14 @@ typedef std::string NamespaceName;
 typedef std::string ClassName;
 typedef std::pair<NamespaceName, ClassName> FullName;
 
+extern const std::string variablePostfix;
+
+//commonly used temp variable names
+extern const std::string nodeWithPostfix;       //"node" + variablePostfix
+extern const std::string tempWithPostfix;       //"temp" + variablePostfix
+extern const std::string convertedWithPostfix;  //"converted" + variablePostfix
+extern const std::string ssWithPostfix;         //"ss" + variablePostfix
+
 class Class {
 public:
     class Member {

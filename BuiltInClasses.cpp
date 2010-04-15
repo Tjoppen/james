@@ -30,11 +30,11 @@ string BuiltInClass::generateElementSetter(string memberName, string nodeName) c
     ostringstream oss;
 
     oss << "{" << endl;
-    oss << "stringstream ss;" << endl;
-    oss << "string converted;" << endl;
-    oss << "ss << " << memberName << ";" << endl;
-    oss << "ss >> converted;" << endl;
-    oss << nodeName << "->setTextContent(XercesString(converted));" << endl;
+    oss << "stringstream " << ssWithPostfix << ";" << endl;
+    oss << "string " << convertedWithPostfix << ";" << endl;
+    oss << ssWithPostfix << " << " << memberName << ";" << endl;
+    oss << ssWithPostfix << " >> " << convertedWithPostfix << ";" << endl;
+    oss << nodeName << "->setTextContent(XercesString(" << convertedWithPostfix << "));" << endl;
     oss << "}" << endl;
 
     return oss.str();
@@ -44,11 +44,11 @@ string BuiltInClass::generateAttributeSetter(string memberName, string attribute
     ostringstream oss;
 
     oss << "{" << endl;
-    oss << "stringstream ss;" << endl;
-    oss << "string converted;" << endl;
-    oss << "ss << " << memberName << ";" << endl;
-    oss << "ss >> converted;" << endl;
-    oss << attributeName << "->setValue(XercesString(converted));" << endl;
+    oss << "stringstream " << ssWithPostfix << ";" << endl;
+    oss << "string " << convertedWithPostfix << ";" << endl;
+    oss << ssWithPostfix << " << " << memberName << ";" << endl;
+    oss << ssWithPostfix << " >> " << convertedWithPostfix << ";" << endl;
+    oss << attributeName << "->setValue(XercesString(" << convertedWithPostfix << "));" << endl;
     oss << "}" << endl;
 
     return oss.str();
@@ -62,9 +62,9 @@ string BuiltInClass::generateMemberSetter(string memberName, string nodeName) co
     ostringstream oss;
 
     oss << "{" << endl;
-    oss << "stringstream ss;" << endl;
-    oss << "ss << XercesString(" << nodeName << "->getTextContent());" << endl;
-    oss << "ss >> " << memberName << ";" << endl;
+    oss << "stringstream " << ssWithPostfix << ";" << endl;
+    oss << ssWithPostfix << " << XercesString(" << nodeName << "->getTextContent());" << endl;
+    oss << ssWithPostfix << " >> " << memberName << ";" << endl;
     oss << "}" << endl;
 
     return oss.str();
@@ -74,9 +74,9 @@ string BuiltInClass::generateAttributeParser(string memberName, string attribute
     ostringstream oss;
 
     oss << "{" << endl;
-    oss << "stringstream ss;" << endl;
-    oss << "ss << XercesString(" << attributeName << "->getValue());" << endl;
-    oss << "ss >> " << memberName << ";" << endl;
+    oss << "stringstream " << ssWithPostfix << ";" << endl;
+    oss << ssWithPostfix << " << XercesString(" << attributeName << "->getValue());" << endl;
+    oss << ssWithPostfix << " >> " << memberName << ";" << endl;
     oss << "}" << endl;
 
     return oss.str();
@@ -89,11 +89,11 @@ string ByteClass::generateElementSetter(string memberName, string nodeName) cons
     ostringstream oss;
 
     oss << "{" << endl;
-    oss << "stringstream ss;" << endl;
-    oss << "string converted;" << endl;
-    oss << "ss << (int)" << memberName << ";" << endl;
-    oss << "ss >> converted;" << endl;
-    oss << nodeName << "->setTextContent(XercesString(converted));" << endl;
+    oss << "stringstream " << ssWithPostfix << ";" << endl;
+    oss << "string " << convertedWithPostfix << ";" << endl;
+    oss << ssWithPostfix << " << (int)" << memberName << ";" << endl;
+    oss << ssWithPostfix << " >> " << convertedWithPostfix << ";" << endl;
+    oss << nodeName << "->setTextContent(XercesString(" << convertedWithPostfix << "));" << endl;
     oss << "}" << endl;
 
     return oss.str();
@@ -103,11 +103,11 @@ string ByteClass::generateAttributeSetter(string memberName, string attributeNam
     ostringstream oss;
 
     oss << "{" << endl;
-    oss << "stringstream ss;" << endl;
-    oss << "string converted;" << endl;
-    oss << "ss << (int)" << memberName << ";" << endl;
-    oss << "ss >> converted;" << endl;
-    oss << attributeName << "->setValue(XercesString(converted));" << endl;
+    oss << "stringstream " << ssWithPostfix << ";" << endl;
+    oss << "string " << convertedWithPostfix << ";" << endl;
+    oss << ssWithPostfix << " << (int)" << memberName << ";" << endl;
+    oss << ssWithPostfix << " >> " << convertedWithPostfix << ";" << endl;
+    oss << attributeName << "->setValue(XercesString(" << convertedWithPostfix << "));" << endl;
     oss << "}" << endl;
 
     return oss.str();
@@ -117,11 +117,11 @@ string ByteClass::generateMemberSetter(string memberName, string nodeName) const
     ostringstream oss;
 
     oss << "{" << endl;
-    oss << "stringstream ss;" << endl;
-    oss << "int temp;" << endl;
-    oss << "ss << XercesString(" << nodeName << "->getTextContent());" << endl;
-    oss << "ss >> temp;" << endl;
-    oss << memberName << " = temp;" << endl;
+    oss << "stringstream " << ssWithPostfix << ";" << endl;
+    oss << "int " << tempWithPostfix << ";" << endl;
+    oss << ssWithPostfix << " << XercesString(" << nodeName << "->getTextContent());" << endl;
+    oss << ssWithPostfix << " >> " << tempWithPostfix << ";" << endl;
+    oss << memberName << " = " << tempWithPostfix << ";" << endl;
     oss << "}" << endl;
 
     return oss.str();
@@ -131,11 +131,11 @@ string ByteClass::generateAttributeParser(string memberName, string attributeNam
     ostringstream oss;
 
     oss << "{" << endl;
-    oss << "stringstream ss;" << endl;
-    oss << "int temp;" << endl;
-    oss << "ss << XercesString(" << attributeName << "->getValue());" << endl;
-    oss << "ss >> temp;" << endl;
-    oss << memberName << " = temp;" << endl;
+    oss << "stringstream " << ssWithPostfix << ";" << endl;
+    oss << "int " << tempWithPostfix << ";" << endl;
+    oss << ssWithPostfix << " << XercesString(" << attributeName << "->getValue());" << endl;
+    oss << ssWithPostfix << " >> " << tempWithPostfix << ";" << endl;
+    oss << memberName << " = " << tempWithPostfix << ";" << endl;
     oss << "}" << endl;
 
     return oss.str();
@@ -148,11 +148,11 @@ string UnsignedByteClass::generateElementSetter(string memberName, string nodeNa
     ostringstream oss;
 
     oss << "{" << endl;
-    oss << "stringstream ss;" << endl;
-    oss << "string converted;" << endl;
-    oss << "ss << (unsigned int)" << memberName << ";" << endl;
-    oss << "ss >> converted;" << endl;
-    oss << nodeName << "->setTextContent(XercesString(converted));" << endl;
+    oss << "stringstream " << ssWithPostfix << ";" << endl;
+    oss << "string " << convertedWithPostfix << ";" << endl;
+    oss << ssWithPostfix << " << (unsigned int)" << memberName << ";" << endl;
+    oss << ssWithPostfix << " >> " << convertedWithPostfix << ";" << endl;
+    oss << nodeName << "->setTextContent(XercesString(" << convertedWithPostfix << "));" << endl;
     oss << "}" << endl;
 
     return oss.str();
@@ -162,11 +162,11 @@ string UnsignedByteClass::generateAttributeSetter(string memberName, string attr
     ostringstream oss;
 
     oss << "{" << endl;
-    oss << "stringstream ss;" << endl;
-    oss << "string converted;" << endl;
-    oss << "ss << (unsigned int)" << memberName << ";" << endl;
-    oss << "ss >> converted;" << endl;
-    oss << attributeName << "->setValue(XercesString(converted));" << endl;
+    oss << "stringstream " << ssWithPostfix << ";" << endl;
+    oss << "string " << convertedWithPostfix << ";" << endl;
+    oss << ssWithPostfix << " << (unsigned int)" << memberName << ";" << endl;
+    oss << ssWithPostfix << " >> " << convertedWithPostfix << ";" << endl;
+    oss << attributeName << "->setValue(XercesString(" << convertedWithPostfix << "));" << endl;
     oss << "}" << endl;
 
     return oss.str();
@@ -176,11 +176,11 @@ string UnsignedByteClass::generateMemberSetter(string memberName, string nodeNam
     ostringstream oss;
 
     oss << "{" << endl;
-    oss << "stringstream ss;" << endl;
-    oss << "unsigned int temp;" << endl;
-    oss << "ss << XercesString(" << nodeName << "->getTextContent());" << endl;
-    oss << "ss >> temp;" << endl;
-    oss << memberName << " = temp;" << endl;
+    oss << "stringstream " << ssWithPostfix << ";" << endl;
+    oss << "unsigned int " << tempWithPostfix << ";" << endl;
+    oss << ssWithPostfix << " << XercesString(" << nodeName << "->getTextContent());" << endl;
+    oss << ssWithPostfix << " >> " << tempWithPostfix << ";" << endl;
+    oss << memberName << " = " << tempWithPostfix << ";" << endl;
     oss << "}" << endl;
 
     return oss.str();
@@ -190,11 +190,11 @@ string UnsignedByteClass::generateAttributeParser(string memberName, string attr
     ostringstream oss;
 
     oss << "{" << endl;
-    oss << "stringstream ss;" << endl;
-    oss << "unsigned int temp;" << endl;
-    oss << "ss << XercesString(" << attributeName << "->getValue());" << endl;
-    oss << "ss >> temp;" << endl;
-    oss << memberName << " = temp;" << endl;
+    oss << "stringstream " << ssWithPostfix << ";" << endl;
+    oss << "unsigned int " << tempWithPostfix << ";" << endl;
+    oss << ssWithPostfix << " << XercesString(" << attributeName << "->getValue());" << endl;
+    oss << ssWithPostfix << " >> " << tempWithPostfix << ";" << endl;
+    oss << memberName << " = " << tempWithPostfix << ";" << endl;
     oss << "}" << endl;
 
     return oss.str();

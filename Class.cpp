@@ -15,6 +15,13 @@ using namespace std;
 
 extern bool verbose;
 
+const string variablePostfix = "_james";
+
+const string nodeWithPostfix = "node" + variablePostfix;
+const string tempWithPostfix = "temp" + variablePostfix;
+const string convertedWithPostfix = "converted" + variablePostfix;
+const string ssWithPostfix = "ss" + variablePostfix;
+
 Class::Class(FullName name, ClassType type) : name(name), type(type), 
         base(NULL), isDocument(false) {
 }
@@ -77,8 +84,9 @@ string Class::generateAppender() const {
         string nodeName = name + "Node";
 
         if(it->isArray()) {
-            setterName = "(*it)";
-            oss << "for(" << it->getType() << "::const_iterator it = " << name << ".begin(); it != " << name << ".end(); it++)" << endl;
+            string itName = "it" + variablePostfix;
+            setterName = "(*" + itName + ")";
+            oss << "for(" << it->getType() << "::const_iterator " << itName << " = " << name << ".begin(); " << itName << " != " << name << ".end(); " << itName << "++)" << endl;
         } else if(it->isOptional()) {
             //insert a non-null check
             setterName += ".get()";
@@ -91,16 +99,16 @@ string Class::generateAppender() const {
 
         if(it->isAttribute) {
             //attribute
-            oss << "XercesString temp(\"" << name << "\");" << endl;
-            oss << "DOMAttr *" << nodeName << " = node->getOwnerDocument()->createAttribute(temp);" << endl;
+            oss << "XercesString " << tempWithPostfix << "(\"" << name << "\");" << endl;
+            oss << "DOMAttr *" << nodeName << " = " << nodeWithPostfix << "->getOwnerDocument()->createAttribute(" << tempWithPostfix << ");" << endl;
             oss << it->cl->generateAttributeSetter(setterName, nodeName) << endl;
-            oss << "node->setAttributeNode(" << nodeName << ");" << endl;
+            oss << nodeWithPostfix << "->setAttributeNode(" << nodeName << ");" << endl;
         } else {
             //element
-            oss << "XercesString temp(\"" << name << "\");" << endl;
-            oss << "DOMElement *" << nodeName << " = node->getOwnerDocument()->createElement(temp);" << endl;
+            oss << "XercesString " << tempWithPostfix << "(\"" << name << "\");" << endl;
+            oss << "DOMElement *" << nodeName << " = " << nodeWithPostfix << "->getOwnerDocument()->createElement(" << tempWithPostfix << ");" << endl;
             oss << it->cl->generateElementSetter(setterName, nodeName) << endl;
-            oss << "node->appendChild(" << nodeName << ");" << endl;
+            oss << nodeWithPostfix << "->appendChild(" << nodeName << ");" << endl;
         }
 
         oss << "}" << endl;
@@ -125,19 +133,20 @@ string Class::generateAttributeSetter(string memberName, string attributeName) c
 
 string Class::generateParser() const {
     ostringstream oss;
+    string childName = "child" + variablePostfix;
 
     if(base && !base->isSimple())
-        oss << base->getClassname() << "::parseNode(node);" << endl;
+        oss << base->getClassname() << "::parseNode(" << nodeWithPostfix << ");" << endl;
 
-    oss << "for(DOMNode *child = node->getFirstChild(); child; child = child->getNextSibling()) {" << endl;
-    oss << "if(!child->getLocalName()) continue;" << endl;
-    oss << "XercesString name(child->getLocalName());" << endl;
+    oss << "for(DOMNode *" << childName << " = " << nodeWithPostfix << "->getFirstChild(); " << childName << "; " << childName << " = " << childName << "->getNextSibling()) {" << endl;
+    oss << "if(!" << childName << "->getLocalName()) continue;" << endl;
+    oss << "XercesString name(" << childName << "->getLocalName());" << endl;
 
     //TODO: replace this with a map<pair<string, DOMNode::ElementType>, void(*)(DOMNode*)> thing?
     //in other words, lookin up parsing function pointers in a map should be faster then all these string comparisons
     for(std::list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
         if(!it->isAttribute) {
-            oss << "if(name == \"" << it->name << "\" && child->getNodeType() == DOMNode::ELEMENT_NODE) {" << endl;
+            oss << "if(name == \"" << it->name << "\" && " << childName << "->getNodeType() == DOMNode::ELEMENT_NODE) {" << endl;
 
             string memberName = it->name;
             if(it->isArray()) {
@@ -160,8 +169,9 @@ string Class::generateParser() const {
                 oss << it->cl->getClassType() << " " << memberName << ";" << endl;
             }
 
-            oss << "DOMElement *childElement = dynamic_cast<DOMElement*>(child);" << endl;
-            oss << it->cl->generateMemberSetter(memberName, "childElement");
+            string childElementName = "childElement" + variablePostfix;
+            oss << "DOMElement *" << childElementName << " = dynamic_cast<DOMElement*>(" << childName << ");" << endl;
+            oss << it->cl->generateMemberSetter(memberName, childElementName);
 
             if(it->isArray()) {
                 oss << it->name << ".push_back(" << memberName << ");" << endl;
@@ -178,10 +188,12 @@ string Class::generateParser() const {
     //attributes
     for(std::list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
         if(it->isAttribute) {
+            string attributeNodeName = "attributeNode" + variablePostfix;
+
             oss << "{" << endl;
-            oss << "XercesString temp(\"" << it->name << "\");" << endl;
-            oss << "if(node->hasAttribute(temp)) {" << endl;
-            oss << "DOMAttr *attributeNode = node->getAttributeNode(temp);" << endl;
+            oss << "XercesString " << tempWithPostfix << "(\"" << it->name << "\");" << endl;
+            oss << "if(" << nodeWithPostfix << "->hasAttribute(" << tempWithPostfix << ")) {" << endl;
+            oss << "DOMAttr *" << attributeNodeName << " = " << nodeWithPostfix << "->getAttributeNode(" << tempWithPostfix << ");" << endl;
 
             string attributeName = it->name;
 
@@ -191,7 +203,7 @@ string Class::generateParser() const {
             }
 
 
-            oss << it->cl->generateAttributeParser(attributeName, "attributeNode") << endl;
+            oss << it->cl->generateAttributeParser(attributeName, attributeNodeName) << endl;
 
             if(it->isOptional()) {
                 oss << it->name << " = " << attributeName << ";" << endl;
@@ -310,16 +322,16 @@ void Class::writeImplementation(ostream& os) const {
     os << "return \"" << name.first << "\";" << endl;
     os << "}" << endl;
 
-    os << "void " << className << "::appendChildren(xercesc::DOMElement *node) const {" << endl;
+    os << "void " << className << "::appendChildren(xercesc::DOMElement *" << nodeWithPostfix << ") const {" << endl;
 
     //call base appender
     if(base && !base->isSimple())
-        os << base->getClassname() << "::appendChildren(node);" << endl;
+        os << base->getClassname() << "::appendChildren(" << nodeWithPostfix << ");" << endl;
 
     os << generateAppender() << endl;
     os << "}" << endl << endl;
 
-    os << "void " << className << "::parseNode(xercesc::DOMElement *node) {" << endl;
+    os << "void " << className << "::parseNode(xercesc::DOMElement *" << nodeWithPostfix << ") {" << endl;
     os << generateParser() << endl;
     os << "}" << endl << endl;
 
@@ -330,9 +342,9 @@ void Class::writeImplementation(ostream& os) const {
 
     //clone()
     os << "boost::shared_ptr<" << className << "> " << className << "::clone() const {" << endl;
-    os << "stringstream ss;" << endl;
-    os << "ss << *this;" << endl;
-    os << "return boost::shared_ptr<" << className<< ">(new " << className << "(ss));" << endl;
+    os << "stringstream " << ssWithPostfix <<";" << endl;
+    os << ssWithPostfix << " << *this;" << endl;
+    os << "return boost::shared_ptr<" << className<< ">(new " << className << "(" << ssWithPostfix << "));" << endl;
     os << "}" << endl;
 }
 
