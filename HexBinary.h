@@ -19,12 +19,13 @@ namespace james {
         char *data;
         int size;
 
-        void copyBuffer(const char *data, int size);
+        void copyBuffer(const void *data, int size);
 
     public:
         HexBinary();
+        HexBinary(const HexBinary& other);
         HexBinary(const std::string& str);
-        HexBinary(const char *data, int size);
+        HexBinary(const void *data, int size);
         ~HexBinary();
 
         void operator= (const std::string& str);

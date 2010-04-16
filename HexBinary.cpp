@@ -11,13 +11,17 @@
 
 using namespace james;
 
-HexBinary::HexBinary() : data(NULL) {}
+HexBinary::HexBinary() : data(NULL), size(0) {}
 
-HexBinary::HexBinary(const std::string& str) : data(NULL) {
+HexBinary::HexBinary(const HexBinary& other) : data(NULL), size(0) {
+    copyBuffer(other.data, other.size);
+}
+
+HexBinary::HexBinary(const std::string& str) : data(NULL), size(0) {
     copyBuffer(str.c_str(), str.size());
 }
 
-HexBinary::HexBinary(const char *data, int size) : data(NULL) {
+HexBinary::HexBinary(const void *data, int size) : data(NULL), size(0) {
     copyBuffer(data, size);
 }
 
@@ -30,7 +34,7 @@ HexBinary::~HexBinary() {
         delete [] data;
 }
 
-void HexBinary::copyBuffer(const char *inData, int inSize) {
+void HexBinary::copyBuffer(const void *inData, int inSize) {
     if(data) {
         delete [] data;
         data = NULL;
