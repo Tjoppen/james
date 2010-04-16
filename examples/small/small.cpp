@@ -47,6 +47,7 @@ int main(void) {
 
         ect->extensionInt = 15;
         ect->extensionAttribute = "Hello extension!";
+        ect->hex = "Hello hex!";
 
         //marshal to stringstream
         ss << *ect;

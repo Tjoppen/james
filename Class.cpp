@@ -365,6 +365,7 @@ void Class::writeHeader(ostream& os) const {
     os << "#include <boost/optional.hpp>" << endl;
     os << "#include <xercesc/util/XercesDefs.hpp>" << endl;
     os << "XERCES_CPP_NAMESPACE_BEGIN class DOMElement; XERCES_CPP_NAMESPACE_END" << endl;
+    os << "#include \"HexBinary.h\"" << endl;
     
     //simple types only need a typedef
     if(isSimple()) {

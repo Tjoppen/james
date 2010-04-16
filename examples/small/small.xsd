@@ -42,6 +42,7 @@
                         <xs:element name="choiceA" type="xs:int"/>
                         <xs:element name="choiceB" type="xs:int"/>
                     </xs:choice>
+                    <xs:element name="hex" type="xs:hexBinary"/>
                 </xs:sequence>
                 <xs:attribute name="extensionAttribute" type="xs:string"/>
             </xs:extension>

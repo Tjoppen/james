@@ -117,6 +117,8 @@ GENERATE_BUILTIN(BooleanClass, "boolean", "bool")
     }
 };
 
+GENERATE_BUILTIN(HexBinaryClass, "hexBinary", "james::HexBinary")};
+
 //aliases
 GENERATE_BUILTIN_ALIAS(IntegerClass, IntClass, "integer")};
 GENERATE_BUILTIN_ALIAS(AnyURIClass, StringClass, "anyURI")};
