@@ -8,6 +8,7 @@
 #ifndef _XMLOBJECT_H
 #define	_XMLOBJECT_H
 
+#include <exception>
 #include <string>
 #include <xercesc/util/XercesDefs.hpp>
 #include <boost/utility/enable_if.hpp>
@@ -44,7 +45,27 @@ namespace james {
     class XMLObject {};
 
     /**
+     * Base class for all exceptions thrown during marshalling and unmarshalling.
+     */
+    class Exception : public std::exception {
+        std::string msg;
+    public:
+        Exception(const std::string& msg) throw();
+        ~Exception() throw();
+
+        const char* what() const throw();
+    };
+
+    //thrown when a required element of a complex type is NULL
+    class MissingRequiredElementException : public Exception {
+    public:
+        MissingRequiredElementException(const std::string& msg) throw();
+    };
+
+    /**
      * Internal utility function for marshalling XMLObjects.
+     *
+     * throws: MissingRequiredElementException if one or more required complex elements is missing
      */
     std::ostream& marshal(std::ostream& os, const james::XMLObject& obj, void (james::XMLObject::*appendChildren)(xercesc::DOMElement*) const, std::string name, std::string nameSpace);
 

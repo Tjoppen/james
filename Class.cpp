@@ -91,8 +91,10 @@ string Class::generateAppender() const {
             //insert a non-null check
             setterName += ".get()";
             oss << "if(" << name << ")" << endl;
-        } else {
-            //required member - check for its existance
+        } else if(!it->cl->isSimple()) {
+            //required non-simple (shared_ptr) member - check for its existance
+            oss << "if(!" << name << ")" << endl;
+            oss << "throw MissingRequiredElementException(\"Missing required element " << this->name.second << "::" << name << " when unmarshalling\");" << endl;
         }
 
         oss << "{" << endl;
