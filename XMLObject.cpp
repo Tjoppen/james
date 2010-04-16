@@ -42,6 +42,8 @@ const char* Exception::what() const throw() {
 
 MissingRequiredElementException::MissingRequiredElementException(const std::string& msg) throw() : Exception(msg) {}
 
+OutOfMemoryException::OutOfMemoryException(const std::string& msg) throw() : Exception(msg) {}
+
 /**
  * Minimal utility class for parsing directly from an std::istream.
  */

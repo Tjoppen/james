@@ -62,6 +62,12 @@ namespace james {
         MissingRequiredElementException(const std::string& msg) throw();
     };
 
+    //thrown when a memory allocation failed
+    class OutOfMemoryException : public Exception {
+    public:
+        OutOfMemoryException(const std::string& msg) throw();
+    };
+
     /**
      * Internal utility function for marshalling XMLObjects.
      *

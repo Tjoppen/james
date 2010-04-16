@@ -31,12 +31,13 @@ OBJECTDIR=build/${CND_CONF}/${CND_PLATFORM}
 
 # Object Files
 OBJECTFILES= \
+	${OBJECTDIR}/BuiltInClasses.o \
+	${OBJECTDIR}/main.o \
 	${OBJECTDIR}/XMLObject.o \
 	${OBJECTDIR}/Class.o \
-	${OBJECTDIR}/BuiltInClasses.o \
 	${OBJECTDIR}/XercesString.o \
-	${OBJECTDIR}/XMLDocument.o \
-	${OBJECTDIR}/main.o
+	${OBJECTDIR}/HexBinary.o \
+	${OBJECTDIR}/XMLDocument.o
 
 # C Compiler Flags
 CFLAGS=
@@ -62,6 +63,16 @@ dist/Debug/GNU-Linux-x86/james: ${OBJECTFILES}
 	${MKDIR} -p dist/Debug/GNU-Linux-x86
 	${LINK.cc} -o ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/james ${OBJECTFILES} ${LDLIBSOPTIONS} 
 
+${OBJECTDIR}/BuiltInClasses.o: nbproject/Makefile-${CND_CONF}.mk BuiltInClasses.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/BuiltInClasses.o BuiltInClasses.cpp
+
+${OBJECTDIR}/main.o: nbproject/Makefile-${CND_CONF}.mk main.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/main.o main.cpp
+
 ${OBJECTDIR}/XMLObject.o: nbproject/Makefile-${CND_CONF}.mk XMLObject.cpp 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
@@ -72,25 +83,20 @@ ${OBJECTDIR}/Class.o: nbproject/Makefile-${CND_CONF}.mk Class.cpp
 	${RM} $@.d
 	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/Class.o Class.cpp
 
-${OBJECTDIR}/BuiltInClasses.o: nbproject/Makefile-${CND_CONF}.mk BuiltInClasses.cpp 
-	${MKDIR} -p ${OBJECTDIR}
-	${RM} $@.d
-	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/BuiltInClasses.o BuiltInClasses.cpp
-
 ${OBJECTDIR}/XercesString.o: nbproject/Makefile-${CND_CONF}.mk XercesString.cpp 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/XercesString.o XercesString.cpp
 
+${OBJECTDIR}/HexBinary.o: nbproject/Makefile-${CND_CONF}.mk HexBinary.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/HexBinary.o HexBinary.cpp
+
 ${OBJECTDIR}/XMLDocument.o: nbproject/Makefile-${CND_CONF}.mk XMLDocument.cpp 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/XMLDocument.o XMLDocument.cpp
-
-${OBJECTDIR}/main.o: nbproject/Makefile-${CND_CONF}.mk main.cpp 
-	${MKDIR} -p ${OBJECTDIR}
-	${RM} $@.d
-	$(COMPILE.cc) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/main.o main.cpp
 
 # Subprojects
 .build-subprojects:
