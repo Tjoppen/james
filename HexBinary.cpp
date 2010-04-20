@@ -25,6 +25,10 @@ HexBinary::HexBinary(const void *data, int size) : data(NULL), size(0) {
     copyBuffer(data, size);
 }
 
+void HexBinary::operator= (const HexBinary& other) {
+    copyBuffer(other.data, other.size);
+}
+
 void HexBinary::operator= (const std::string& str) {
     copyBuffer(str.c_str(), str.size());
 }

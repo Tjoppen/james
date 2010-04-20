@@ -28,6 +28,7 @@ namespace james {
         HexBinary(const void *data, int size);
         ~HexBinary();
 
+        void operator= (const HexBinary& other);
         void operator= (const std::string& str);
         void encode(std::ostream& os) const;
         void decode(std::istream& is);
