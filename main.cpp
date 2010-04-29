@@ -529,13 +529,16 @@ static void diffAndReplace(string fileName, string newContents) {
 
     if(newContents == originalContents) {
         //no difference
-        if(verbose) cerr << fileName << "\tnot changed" << endl;
+        if(verbose) cerr << ". " << fileName << endl;
     } else {
         //contents differ - either original does not exist or the schema changed for this type
-        if(unlink(fileName.c_str()))
-            cerr << fileName << "\tcreated" << endl;
-        else
-            cerr << fileName << "\tchanged" << endl;
+        if(unlink(fileName.c_str())) {
+            //new file added
+            cerr << "A " << fileName << endl;
+        } else {
+            //old file modified (replaced)
+            cerr << "M " << fileName << endl;
+        }
 
         //write new content
         ofstream ofs(fileName.c_str());
