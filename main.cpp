@@ -244,6 +244,15 @@ static void parseSequence(DOMElement *parent, DOMElement *sequence, shared_ptr<C
     CHECK(sequence);
 
     vector<DOMElement*> children = getChildElementsByTagName(sequence, "element");
+
+    //support <sequence> in <choice> by simply recursing
+    //simply put this means the <sequence> tags are ignored
+    vector<DOMElement*> subSequences = getChildElementsByTagName(sequence, "sequence");
+
+    if(subSequences.size() > 0 && !choice)
+        throw runtime_error("Found <sequence> element in another <sequence> element");
+
+    children.insert(children.end(), subSequences.begin(), subSequences.end());
     
     for(int x = 0; x < children.size(); x++) {
         DOMElement *child = children[x];
@@ -278,7 +287,10 @@ static void parseSequence(DOMElement *parent, DOMElement *sequence, shared_ptr<C
         if(choice)
             minOccurs = 0;
 
-        if(child->hasAttribute(typeStr)) {
+        if(XercesString(child->getLocalName()) == "sequence") {
+            //<sequence> in <choice> - insert the <element>s within as if the were in this <choice>
+            parseSequence(parent, child, cl, true);
+        } else if(child->hasAttribute(typeStr)) {
             //has type == end point - add as member of cl
             Class::Member info;
 
