@@ -46,13 +46,16 @@ map<string, string> nsLUT;
 //collection of all generated classes
 map<FullName, shared_ptr<Class> > classes;
 
+//fake classes which are appended to other classes. see Class::groups and xs::attributeGroup
+map<FullName, shared_ptr<Class> > groups;
+
 bool verbose = false;
 
-static shared_ptr<Class> addClass(shared_ptr<Class> cl) {
-    if(classes.find(cl->name) != classes.end())
+static shared_ptr<Class> addClass(shared_ptr<Class> cl, map<FullName, shared_ptr<Class> >& to = classes) {
+    if(to.find(cl->name) != to.end())
         throw runtime_error(cl->name.first + ":" + cl->name.second + " defined more than once");
 
-    return classes[cl->name] = cl;
+    return to[cl->name] = cl;
 }
 
 //set of C++ keywords. initialized by initKeywordSet()
@@ -272,13 +275,8 @@ static void parseSequence(DOMElement *parent, DOMElement *sequence, shared_ptr<C
         }
 
         //all choice elements are optional
-        if(choice) {
-            if(maxOccurs > 1)
-                throw runtime_error("maxOccurs > 1 specified for choice element");
-
+        if(choice)
             minOccurs = 0;
-            maxOccurs = 1;
-        }
 
         if(child->hasAttribute(typeStr)) {
             //has type == end point - add as member of cl
@@ -385,6 +383,12 @@ static void parseComplexType(DOMElement *element, FullName fullName, shared_ptr<
             info.maxOccurs = 1;
 
             cl->addMember(info);
+		} else if(name == "attributeGroup") {
+            if(!child->hasAttribute(XercesString("ref")))
+                throw runtime_error("<attributeGroup> missing expected attribute 'ref'");
+
+            //add group ref
+            cl->groups.push_back(toFullName(XercesString(child->getAttribute(XercesString("ref")))));
         } else {
             throw runtime_error("Unknown complexType child of type " + (string)name);
         }
@@ -416,7 +420,8 @@ static void parseElement(DOMElement *element, string tns) {
     if(nodeNs != XSL || (
             nodeName != "complexType" &&
             nodeName != "element" &&
-            nodeName != "simpleType"))
+            nodeName != "simpleType") &&
+            nodeName != "attributeGroup")
         return;
 
     //<complexType>, <element> or <simpleType>
@@ -443,6 +448,27 @@ static void parseElement(DOMElement *element, string tns) {
         addClass(shared_ptr<Class>(new Class(fullName, Class::COMPLEX_TYPE, type)))->isDocument = true;
     } else if(nodeName == "simpleType") {
         parseSimpleType(element, fullName);
+    } else if(nodeName == "attributeGroup") {
+        //handle an attributeGroup almost the same way as a complexType
+        //we add the dummy Class group to ::groups rather than ::classes
+        //this means it won't result in generated code
+        //work() will copy the members of referenced groups to the referencing classes
+        shared_ptr<Class> group(new Class(fullName, Class::COMPLEX_TYPE));
+
+        parseComplexType(element, fullName, group);
+        addClass(group, groups);
+    }
+}
+
+//sets the Class::Member::cl pointer for each member in each class in classMap
+static void resolveMemberRefs(map<FullName, shared_ptr<Class> >& classMap) {
+    for(map<FullName, shared_ptr<Class> >::iterator it = classMap.begin(); it != classMap.end(); it++) {
+        for(list<Class::Member>::iterator it2 = it->second->members.begin(); it2 != it->second->members.end(); it2++) {
+            if(classes.find(it2->type) == classes.end())
+                throw runtime_error("Undefined type " + it2->type.first + ":" + it2->type.second + " in member " + it2->name + " of " + it->first.first + ":" + it->first.second);
+
+            it2->cl = classes[it2->type].get();
+        }
     }
 }
 
@@ -480,6 +506,11 @@ static void work(string outputDir, const vector<string>& schemaNames) {
 
     //make second pass through classes and set all member and base class pointers correctly
     //this has the side effect of catching any undefined classes
+
+    //first resolve member references in both ::classes and ::groups
+    resolveMemberRefs(classes);
+    resolveMemberRefs(groups);
+
     for(map<FullName, shared_ptr<Class> >::iterator it = classes.begin(); it != classes.end(); it++) {
         if(it->second->hasBase()) {
             if(classes.find(it->second->baseType) == classes.end())
@@ -489,11 +520,14 @@ static void work(string outputDir, const vector<string>& schemaNames) {
         } else if(it->second->isDocument)
             throw runtime_error("Document without base type!");
 
-        for(list<Class::Member>::iterator it2 = it->second->members.begin(); it2 != it->second->members.end(); it2++) {
-            if(classes.find(it2->type) == classes.end())
-                throw runtime_error("Undefined type " + it2->type.first + ":" + it2->type.second + " in member " + it2->name + " of " + it->first.first + ":" + it->first.second);
+        //insert members of any referenced groups as members in this class
+        for(list<FullName>::iterator it2 = it->second->groups.begin(); it2 != it->second->groups.end(); it2++) {
+            if(groups.find(*it2) == groups.end())
+                throw runtime_error("Undefined group " + it2->first + ":" + it2->second + " in " + it->second->name.first + ":" + it->second->name.second);
 
-            it2->cl = classes[it2->type].get();
+            //add each member in the group to the current class
+            for(list<Class::Member>::iterator it3 = groups[*it2]->members.begin(); it3 != groups[*it2]->members.end(); it3++)
+                it->second->members.push_back(*it3);
         }
     }
 }

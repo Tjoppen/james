@@ -63,6 +63,7 @@ public:
     bool hasBase() const;
     
     std::list<Member> members;
+    std::list<FullName> groups; //attributeGroups to add to this class
 
     Class(FullName name, ClassType type);
     Class(FullName name, ClassType type, FullName baseType);
