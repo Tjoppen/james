@@ -146,6 +146,7 @@ string Class::generateAttributeSetter(string memberName, string attributeName) c
 string Class::generateParser() const {
     ostringstream oss;
     string childName = "child" + variablePostfix;
+    string nameName = "name" + variablePostfix;
 
     if(base) {
         if(base->isSimple()) {
@@ -158,13 +159,13 @@ string Class::generateParser() const {
 
     oss << "for(DOMNode *" << childName << " = " << nodeWithPostfix << "->getFirstChild(); " << childName << "; " << childName << " = " << childName << "->getNextSibling()) {" << endl;
     oss << "if(!" << childName << "->getLocalName()) continue;" << endl;
-    oss << "XercesString name(" << childName << "->getLocalName());" << endl;
+    oss << "XercesString " << nameName << "(" << childName << "->getLocalName());" << endl;
 
     //TODO: replace this with a map<pair<string, DOMNode::ElementType>, void(*)(DOMNode*)> thing?
     //in other words, lookin up parsing function pointers in a map should be faster then all these string comparisons
     for(std::list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
         if(!it->isAttribute) {
-            oss << "if(name == \"" << it->name << "\" && " << childName << "->getNodeType() == DOMNode::ELEMENT_NODE) {" << endl;
+            oss << "if(" << nameName << " == \"" << it->name << "\" && " << childName << "->getNodeType() == DOMNode::ELEMENT_NODE) {" << endl;
 
             string memberName = it->name;
             if(it->isArray()) {
