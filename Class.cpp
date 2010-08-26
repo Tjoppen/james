@@ -77,6 +77,16 @@ void Class::addMember(Member memberInfo) {
  */
 string Class::generateAppender() const {
     ostringstream oss;
+
+    if(base) {
+        if(base->isSimple()) {
+            //simpleContent
+            oss << base->generateElementSetter("content", nodeWithPostfix) << endl;
+        } else {
+            //call base appender
+            oss << base->getClassname() << "::appendChildren(" << nodeWithPostfix << ");" << endl;
+        }
+    }
     
     for(std::list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
         string name = it->name;
@@ -137,8 +147,14 @@ string Class::generateParser() const {
     ostringstream oss;
     string childName = "child" + variablePostfix;
 
-    if(base && !base->isSimple())
-        oss << base->getClassname() << "::parseNode(" << nodeWithPostfix << ");" << endl;
+    if(base) {
+        if(base->isSimple()) {
+            //simpleContent
+            oss << base->generateMemberSetter("content", nodeWithPostfix) << endl;
+        } else {
+            oss << base->getClassname() << "::parseNode(" << nodeWithPostfix << ");" << endl;
+        }
+    }
 
     oss << "for(DOMNode *" << childName << " = " << nodeWithPostfix << "->getFirstChild(); " << childName << "; " << childName << " = " << childName << "->getNextSibling()) {" << endl;
     oss << "if(!" << childName << "->getLocalName()) continue;" << endl;
@@ -281,7 +297,7 @@ void Class::writeImplementation(ostream& os) const {
     os << "using namespace james;" << endl;
 
     //constructors
-    if(base)
+    if(base && !base->isSimple())
         os << className << "::" << className << "() : " << base->getClassname() << "() {";
     else
         os << className << "::" << className << "() {";
@@ -290,7 +306,7 @@ void Class::writeImplementation(ostream& os) const {
 
     //method implementations
     //unmarshalling constructors
-    if(base)
+    if(base && !base->isSimple())
         os << className << "::" << className << "(std::istream& is) : " << base->getClassname() << "() {" << endl;
     else
         os << className << "::" << className << "(std::istream& is) {" << endl;
@@ -298,7 +314,7 @@ void Class::writeImplementation(ostream& os) const {
     os << "is >> *this;" << endl;
     os << "}" << endl;
 
-    if(base)
+    if(base && !base->isSimple())
         os << className << "::" << className << "(const std::string& str) : " << base->getClassname() << "() {" << endl;
     else
         os << className << "::" << className << "(const std::string& str) {" << endl;
@@ -325,11 +341,6 @@ void Class::writeImplementation(ostream& os) const {
     os << "}" << endl;
 
     os << "void " << className << "::appendChildren(xercesc::DOMElement *" << nodeWithPostfix << ") const {" << endl;
-
-    //call base appender
-    if(base && !base->isSimple())
-        os << base->getClassname() << "::appendChildren(" << nodeWithPostfix << ");" << endl;
-
     os << generateAppender() << endl;
     os << "}" << endl << endl;
 
@@ -373,7 +384,8 @@ void Class::writeHeader(ostream& os) const {
     } else {
         if(base)
             os << "#include " << getBaseHeader() << endl;
-        else
+        
+        if(!base || base->isSimple())
             os << "#include \"XMLObject.h\"" << endl;
 
         if(isDocument)
@@ -386,7 +398,7 @@ void Class::writeHeader(ostream& os) const {
 
         if(isDocument)
             os << "class " << className << " : public " << base->getClassname() << ", public james::XMLDocument";
-        else if(base)
+        else if(base && !base->isSimple())
             os << "class " << className << " : public " << base->getClassname();
         else
             os << "class " << className << " : public james::XMLObject";
@@ -418,6 +430,10 @@ void Class::writeHeader(ostream& os) const {
 
         //clone()
         os << "boost::shared_ptr<" << className << "> clone() const;" << endl;
+
+        //simpleContent
+        if(base && base->isSimple())
+            os << base->getClassType() << " content;" << endl;
 
         //members
         for(list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
