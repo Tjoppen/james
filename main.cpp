@@ -23,7 +23,7 @@
 #include <xercesc/dom/DOMNamedNodeMap.hpp>
 
 #include "main.h"
-#include "XercesString.h"
+#include "libjames/XercesString.h"
 #include "Class.h"
 #include "BuiltInClasses.h"
 

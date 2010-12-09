@@ -1,17 +1,15 @@
 cmake_minimum_required(VERSION 2.6)
 project(james)
 
-include_directories(libjames)
+add_subdirectory(libjames)
 
-add_executable(james
+add_executable(james-bin
 	main.cpp
 	Class.cpp
 	BuiltInClasses.cpp
-	libjames/HexBinary.cpp
-	libjames/XercesString.cpp
-	libjames/XMLDocument.cpp
-	libjames/XMLObject.cpp
 	)
 
-target_link_libraries(james xerces-c)
+target_link_libraries(james-bin james xerces-c)
+set_target_properties(james-bin PROPERTIES OUTPUT_NAME james)
+install(TARGETS james-bin DESTINATION bin)
 
