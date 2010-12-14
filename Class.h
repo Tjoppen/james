@@ -11,6 +11,7 @@
 #include <string>
 #include <map>
 #include <list>
+#include <set>
 #include <limits.h>
 
 #define UNBOUNDED INT_MAX
@@ -40,8 +41,6 @@ public:
 
         bool isArray() const;
         bool isOptional() const;    //returns true if this member is optional (not an array)
-
-        std::string getType() const;
     };
 
     enum ClassType {
@@ -115,13 +114,8 @@ public:
      */
     virtual std::string getBaseHeader() const;
 
-    /**
-     * Returns the base member type of this class.
-     * Typically these fall into two categories:
-     *  build-in simple types ("string" -> std::string, "int" -> int)
-     *  complex types ("ExampleType" -> shared_ptr<ExampleType>)
-     */
-    std::string getClassType() const;
+    std::set<std::string> getIncludedClasses() const;
+    std::set<std::string> getPrototypeClasses() const;
 
     void writeImplementation(std::ostream& os) const;
     void writeHeader(std::ostream& os) const;

@@ -11,5 +11,6 @@ install(FILES
 	XercesString.h
 	XMLDocument.h
 	XMLObject.h
+	optional.h
 	DESTINATION include/libjames)
 

@@ -9,7 +9,6 @@
 #include <sstream>
 #include <stdexcept>
 #include <iostream>
-#include <boost/shared_ptr.hpp>
 
 using namespace std;
 
@@ -96,15 +95,11 @@ string Class::generateAppender() const {
         if(it->isArray()) {
             string itName = "it" + variablePostfix;
             setterName = "(*" + itName + ")";
-            oss << "for(" << it->getType() << "::const_iterator " << itName << " = " << name << ".begin(); " << itName << " != " << name << ".end(); " << itName << "++)" << endl;
+            oss << "for(std::vector<" << it->cl->getClassname() << ">::const_iterator " << itName << " = " << name << ".begin(); " << itName << " != " << name << ".end(); " << itName << "++)" << endl;
         } else if(it->isOptional()) {
             //insert a non-null check
             setterName += ".get()";
             oss << "if(" << name << ")" << endl;
-        } else if(!it->cl->isSimple()) {
-            //required non-simple (shared_ptr) member - check for its existance
-            oss << "if(!" << name << ")" << endl;
-            oss << "throw MissingRequiredElementException(\"Missing required element " << this->name.second << "::" << name << " when unmarshalling\");" << endl;
         }
 
         oss << "{" << endl;
@@ -133,7 +128,7 @@ string Class::generateElementSetter(string memberName, string nodeName) const {
     if(isSimple() && base)
         return base->generateElementSetter(memberName, nodeName);
 
-    return memberName + "->appendChildren(" + nodeName + ");";
+    return memberName + ".appendChildren(" + nodeName + ");";
 }
 
 string Class::generateAttributeSetter(string memberName, string attributeName) const {
@@ -168,24 +163,9 @@ string Class::generateParser() const {
             oss << "if(" << nameName << " == \"" << it->name << "\" && " << childName << "->getNodeType() == DOMNode::ELEMENT_NODE) {" << endl;
 
             string memberName = it->name;
-            if(it->isArray()) {
-                memberName += "Temp";
-                oss << it->cl->getClassType() << " " << memberName;
-
-                if(it->cl->isSimple()) {
-                    //for simple types we're done
-                    oss << ";" << endl;
-                } else {
-                    //for non-basic types we need to set the contents of the shared_ptr
-                    oss << "(new " << it->cl->getClassname() << ");" << endl;
-                }
-            } else if(!it->cl->isSimple()) {
-                //add check and allocation of shared_ptr
-                oss << "if(!" << memberName << ") " << memberName << " = boost::shared_ptr<" << it->cl->getClassname() << ">(new " << it->cl->getClassname() << ");" << endl;
-            } else if(it->isOptional()) {
-                //optional and simple - parse to temp var before setting
-                memberName += "Temp";
-                oss << it->cl->getClassType() << " " << memberName << ";" << endl;
+            if(it->isArray() || it->isOptional()) {
+                memberName += tempWithPostfix;
+                oss << it->cl->getClassname() << " " << memberName << ";" << endl;
             }
 
             string childElementName = "childElement" + variablePostfix;
@@ -194,7 +174,7 @@ string Class::generateParser() const {
 
             if(it->isArray()) {
                 oss << it->name << ".push_back(" << memberName << ");" << endl;
-            } else if(it->isOptional() && it->cl->isSimple()) {
+            } else if(it->isOptional()) {
                 oss << it->name << " = " << memberName << ";" << endl;
             }
 
@@ -218,7 +198,7 @@ string Class::generateParser() const {
 
             if(it->isOptional()) {
                 attributeName += "Temp";
-                oss << it->cl->getClassType() << " " << attributeName << ";" << endl;
+                oss << it->cl->getClassname() << " " << attributeName << ";" << endl;
             }
 
 
@@ -241,7 +221,7 @@ string Class::generateMemberSetter(string memberName, string nodeName) const {
 
     ostringstream oss;
 
-    oss << memberName << "->parseNode(" << nodeName << ");" << endl;
+    oss << memberName << ".parseNode(" << nodeName << ");" << endl;
 
     return oss.str();
 }
@@ -254,23 +234,13 @@ string Class::generateAttributeParser(string memberName, string attributeName) c
 }
 
 string Class::getClassname() const {
-    if(isSimple() && base)
-        return base->getClassname();
-    else
-        return name.second;
-}
-
-string Class::getClassType() const {
-    if(isSimple())
-        return getClassname();
-    else
-        return "boost::shared_ptr<" + name.second + ">";
+    return name.second;
 }
 
 string Class::getBaseHeader() const {
     if(base->isSimple())
         return base->getBaseHeader();
-    
+
     return "\"" + base->getClassname() + ".h\"";
 }
 
@@ -281,17 +251,12 @@ void Class::writeImplementation(ostream& os) const {
     os << "#include <xercesc/dom/DOMDocument.hpp>" << endl;
     os << "#include <xercesc/dom/DOMElement.hpp>" << endl;
     os << "#include <xercesc/dom/DOMAttr.hpp>" << endl;
-    os << "#include \"XercesString.h\"" << endl;
+    os << "#include <libjames/XercesString.h>" << endl;
     os << "#include \"" << className << ".h\"" << endl;
 
     //no implementation needed for simple types
     if(isSimple())
         return;
-
-    //include headers of all non-basic member types that aren't us
-    for(list<Member>::const_iterator it = members.begin(); it != members.end(); it++)
-        if(!it->cl->isSimple() && it->cl != this)
-            os << "#include \"" << it->cl->name.second << ".h\"" << endl;
 
     os << "using namespace std;" << endl;
     os << "using namespace xercesc;" << endl;
@@ -349,17 +314,35 @@ void Class::writeImplementation(ostream& os) const {
     os << generateParser() << endl;
     os << "}" << endl << endl;
 
-    //cast operator
-    os << className << "::operator boost::shared_ptr<" << className << "> () const {" << endl;
-    os << "return boost::shared_ptr<" << className << ">(new " << className << "(*this));" << endl;
-    os << "}" << endl;
-
     //clone()
-    os << "boost::shared_ptr<" << className << "> " << className << "::clone() const {" << endl;
+    os << className << " " << className << "::clone() const {" << endl;
     os << "stringstream " << ssWithPostfix <<";" << endl;
     os << ssWithPostfix << " << *this;" << endl;
-    os << "return boost::shared_ptr<" << className<< ">(new " << className << "(" << ssWithPostfix << "));" << endl;
+    os << "return " << className << "(" << ssWithPostfix << ");" << endl;
     os << "}" << endl;
+}
+
+set<string> Class::getIncludedClasses() const {
+    set<string> classesToInclude;
+
+    //return classes of any simple non-builtin elements and any required non-simple elements
+    for(list<Member>::const_iterator it = members.begin(); it != members.end(); it++)
+        if(!it->cl->isBuiltIn() && it->cl->isSimple() || !it->isArray() && !it->isOptional() && !it->cl->isSimple())
+            classesToInclude.insert(it->cl->getClassname());
+
+    return classesToInclude;
+}
+
+set<string> Class::getPrototypeClasses() const {
+    set<string> classesToInclude = getIncludedClasses();
+    set<string> classesToPrototype;
+
+    //return the classes of any non-simple non-required elements
+    for(list<Member>::const_iterator it = members.begin(); it != members.end(); it++)
+        if(classesToInclude.find(it->cl->getClassname()) == classesToInclude.end() && !it->cl->isSimple() && (it->isArray() || it->isOptional()))
+            classesToPrototype.insert(it->cl->getClassname());
+
+    return classesToPrototype;
 }
 
 void Class::writeHeader(ostream& os) const {
@@ -373,11 +356,10 @@ void Class::writeHeader(ostream& os) const {
     if(isDocument)
         os << "#include <istream>" << endl;
 
-    os << "#include <boost/shared_ptr.hpp>" << endl;
-    os << "#include <boost/optional.hpp>" << endl;
     os << "#include <xercesc/util/XercesDefs.hpp>" << endl;
     os << "XERCES_CPP_NAMESPACE_BEGIN class DOMElement; XERCES_CPP_NAMESPACE_END" << endl;
-    os << "#include \"HexBinary.h\"" << endl;
+    os << "#include <libjames/HexBinary.h>" << endl;
+    os << "#include <libjames/optional.h>" << endl;
     
     //simple types only need a typedef
     if(isSimple()) {
@@ -387,15 +369,22 @@ void Class::writeHeader(ostream& os) const {
             os << "#include " << getBaseHeader() << endl;
         
         if(!base || base->isSimple())
-            os << "#include \"XMLObject.h\"" << endl;
+            os << "#include <libjames/XMLObject.h>" << endl;
 
         if(isDocument)
-            os << "#include \"XMLDocument.h\"" << endl;
+            os << "#include <libjames/XMLDocument.h>" << endl;
 
-        //non-basic member class prototypes
-        for(list<Member>::const_iterator it = members.begin(); it != members.end(); it++)
-            if(!it->cl->isSimple())
-                os << "class " << it->cl->getClassname() << ";" << endl;
+        //include member classes that we can't prototype
+        set<string> classesToInclude = getIncludedClasses();
+
+        for(set<string>::const_iterator it = classesToInclude.begin(); it != classesToInclude.end(); it++)
+            os << "#include \"" << *it << ".h\"" << endl;
+
+        set<string> classesToPrototype = getPrototypeClasses();
+
+        //member class prototypes, but only for classes that we haven't already included
+        for(set<string>::const_iterator it = classesToPrototype.begin(); it != classesToPrototype.end(); it++)
+            os << "class " << *it << ";" << endl;
 
         if(isDocument)
             os << "class " << className << " : public " << base->getClassname() << ", public james::XMLDocument";
@@ -426,30 +415,33 @@ void Class::writeHeader(ostream& os) const {
         os << "void appendChildren(xercesc::DOMElement *node) const;" << endl;
         os << "void parseNode(xercesc::DOMElement *node);" << endl;
 
-        //cast operator
-        os << "operator boost::shared_ptr<" << className << "> () const;" << endl;
-
         //clone()
-        os << "boost::shared_ptr<" << className << "> clone() const;" << endl;
+        os << className << " clone() const;" << endl;
 
         //simpleContent
         if(base && base->isSimple())
-            os << base->getClassType() << " content;" << endl;
+            os << base->getClassname() << " content;" << endl;
 
         //members
         for(list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
-            if(it->isOptional() && it->cl->isSimple())
-                os << "boost::optional<";
+            if(it->isOptional())
+                os << "james::optional<";
+            else if(it->isArray())
+                os << "std::vector<";
 
-            os << it->getType();
+            os << it->cl->getClassname();
 
-            if(it->isOptional() && it->cl->isSimple())
+            if(it->isOptional() || it->isArray())
                 os << " >";
 
             os << " " << it->name << ";" << endl;
         }
 
         os << "};" << endl;
+
+        //include classes that we prototyped earlier
+        for(set<string>::const_iterator it = classesToPrototype.begin(); it != classesToPrototype.end(); it++)
+            os << "#include \"" << *it << ".h\"" << endl;
     }
     
     os << "#endif //_" << className << "_H" << endl;
@@ -461,12 +453,4 @@ bool Class::Member::isArray() const {
 
 bool Class::Member::isOptional() const {
     return minOccurs == 0 && maxOccurs == 1;
-}
-
-string Class::Member::getType() const {
-    //vector if array, regular member otherwise
-    if(isArray()) {
-        return "std::vector<" + cl->getClassType() + " >";
-    } else
-        return cl->getClassType();
 }
