@@ -41,6 +41,7 @@ public:
 
         bool isArray() const;
         bool isOptional() const;    //returns true if this member is optional (not an array)
+        bool isRequired() const;
     };
 
     enum ClassType {
@@ -116,6 +117,12 @@ public:
 
     std::set<std::string> getIncludedClasses() const;
     std::set<std::string> getPrototypeClasses() const;
+
+    /**
+     * Returns a list of the required elements of this Class.
+     * Also includes those of its base if includingBase == true.
+     */
+    std::list<Member> getRequiredElements(bool includeBase) const;
 
     void writeImplementation(std::ostream& os) const;
     void writeHeader(std::ostream& os) const;

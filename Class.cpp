@@ -163,7 +163,7 @@ string Class::generateParser() const {
             oss << "if(" << nameName << " == \"" << it->name << "\" && " << childName << "->getNodeType() == DOMNode::ELEMENT_NODE) {" << endl;
 
             string memberName = it->name;
-            if(it->isArray() || it->isOptional()) {
+            if(!it->isRequired()) {
                 memberName += tempWithPostfix;
                 oss << it->cl->getClassname() << " " << memberName << ";" << endl;
             }
@@ -263,12 +263,64 @@ void Class::writeImplementation(ostream& os) const {
     os << "using namespace james;" << endl;
 
     //constructors
-    if(base && !base->isSimple())
-        os << className << "::" << className << "() : " << base->getClassname() << "() {";
-    else
-        os << className << "::" << className << "() {";
+    list<Member> required = getRequiredElements(true);
+
+    //we can only add a default constructor if we have at least one required element
+    //otherwise that constructor effectively becomes a default constructor
+    if(required.size() > 0) {
+        if(base && !base->isSimple())
+            os << className << "::" << className << "() : " << base->getClassname() << "() {";
+        else
+            os << className << "::" << className << "() {";
+
+        os << "}" << endl << endl;
+    }
+
+    //first, the constructor that only requires the default elements
+    os << className << "::" << className << "(";
+
+    for(list<Member>::const_iterator it = required.begin(); it != required.end(); it++) {
+        if(it != required.begin())
+            os << ", ";
+
+        os << it->cl->getClassname() << " " << it->name;
+    }
+
+    os << ") ";
     
-    os << "}" << endl << endl;
+    if(required.size() > 0 || (base && !base->isSimple()))
+        os << ": ";
+
+    bool hasParens = false;
+
+    if(base && !base->isSimple()) {
+        //pass the base class' required elements
+        list<Member> baseRequired = base->getRequiredElements(true);
+
+        os << base->getClassname() << "(";
+
+        for(list<Member>::const_iterator it = baseRequired.begin(); it != baseRequired.end(); it++) {
+            if(it != baseRequired.begin())
+                os << ", ";
+
+            os << it->name;
+        }
+
+        os << ")";
+        hasParens = true;
+    }
+
+    //get only the ones that we require
+    list<Member> ourRequired = getRequiredElements(false);
+
+    for(list<Member>::const_iterator it = ourRequired.begin(); it != ourRequired.end(); it++) {
+        if(hasParens || it != ourRequired.begin())
+            os << ", ";
+
+        os << it->name << "(" << it->name << ")";
+    }
+
+    os << " {}" << endl;
 
     //method implementations
     //unmarshalling constructors
@@ -280,13 +332,10 @@ void Class::writeImplementation(ostream& os) const {
     os << "is >> *this;" << endl;
     os << "}" << endl;
 
-    if(base && !base->isSimple())
-        os << className << "::" << className << "(const std::string& str) : " << base->getClassname() << "() {" << endl;
-    else
-        os << className << "::" << className << "(const std::string& str) {" << endl;
-
+    //factory method
+    os << className << " " << className << "::fromString(const std::string& str) {" << endl;
     os << "istringstream iss(str);" << endl;
-    os << "iss >> *this;" << endl;
+    os << "return " << className << "(iss);" << endl;
     os << "}" << endl;
 
     //string cast operator
@@ -327,7 +376,7 @@ set<string> Class::getIncludedClasses() const {
 
     //return classes of any simple non-builtin elements and any required non-simple elements
     for(list<Member>::const_iterator it = members.begin(); it != members.end(); it++)
-        if(!it->cl->isBuiltIn() && it->cl->isSimple() || !it->isArray() && !it->isOptional() && !it->cl->isSimple())
+        if(!it->cl->isBuiltIn() && it->cl->isSimple() || it->isRequired() && !it->cl->isSimple())
             classesToInclude.insert(it->cl->getClassname());
 
     return classesToInclude;
@@ -339,7 +388,7 @@ set<string> Class::getPrototypeClasses() const {
 
     //return the classes of any non-simple non-required elements
     for(list<Member>::const_iterator it = members.begin(); it != members.end(); it++)
-        if(classesToInclude.find(it->cl->getClassname()) == classesToInclude.end() && !it->cl->isSimple() && (it->isArray() || it->isOptional()))
+        if(classesToInclude.find(it->cl->getClassname()) == classesToInclude.end() && !it->cl->isSimple() && !it->isRequired())
             classesToPrototype.insert(it->cl->getClassname());
 
     return classesToPrototype;
@@ -396,12 +445,33 @@ void Class::writeHeader(ostream& os) const {
         os << " {" << endl;
         os << "public:" << endl;
 
-        os << className << "();" << endl;
+        //constructors
+        //first, the constructor that only requires the default elements
+        list<Member> required = getRequiredElements(true);
+
+        //add default constructor if there are required elements
+        if(required.size() > 0)
+            os << className << "();" << endl;
+
+        os << className << "(";
+
+        for(list<Member>::const_iterator it = required.begin(); it != required.end(); it++) {
+            if(it != required.begin())
+                os << ", ";
+
+            os << it->cl->getClassname() << " " << it->name;
+        }
+
+        os << ");" << endl;
 
         //prototypes
         //add constructor for unmarshalling this document from an istream of string
         os << className << "(std::istream& is);" << endl;
-        os << className << "(const std::string& str);" << endl;
+
+        //factory method for unmarshalling std::string
+        //we can't use a constructor since that would conflict with the required
+        //element constructor for a type that only has one string element
+        os << "static " << className <<  " fromString(const std::string& str);" << endl;
 
         //string cast operator
         os << "operator std::string () const;" << endl;
@@ -453,4 +523,32 @@ bool Class::Member::isArray() const {
 
 bool Class::Member::isOptional() const {
     return minOccurs == 0 && maxOccurs == 1;
+}
+
+bool Class::Member::isRequired() const {
+    return !isArray() && !isOptional();
+}
+
+std::list<Class::Member> Class::getRequiredElements(bool includeBase) const {
+    std::list<Member> ret;
+
+    if(includeBase && base)
+        ret = base->getRequiredElements(true);
+
+    //regard the contents of a complexType with simpleContents as a required
+    //element named "content" since we already have that as an element
+    if(base && base->isSimple()) {
+        Member contentMember;
+        contentMember.name = "content";
+        contentMember.cl = base;
+        contentMember.minOccurs = contentMember.maxOccurs = 1;
+
+        ret.push_back(contentMember);
+    }
+
+    for(std::list<Member>::const_iterator it = members.begin(); it != members.end(); it++)
+        if(it->isRequired())
+            ret.push_back(*it);
+
+    return ret;
 }
