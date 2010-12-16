@@ -32,19 +32,24 @@ public:\
     name(std::string xslOverride) : BuiltInClass(xslOverride) {}\
     std::string getClassname() const {return classname;}
 
+//same as GENERATE_BUILTIN, except shouldUseConstReferences() is made to return false
+#define GENERATE_BUILTIN_NONCONST(name, xslName, classname)\
+GENERATE_BUILTIN(name, xslName, classname)\
+    bool shouldUseConstReferences() const {return false;}
+
 #define GENERATE_BUILTIN_ALIAS(name, base, override)\
 class name : public base {\
 public:\
     name() : base(override) {}
 
-GENERATE_BUILTIN(ByteClass, "byte", "char")
+GENERATE_BUILTIN_NONCONST(ByteClass, "byte", "char")
     virtual std::string generateElementSetter(std::string memberName, std::string nodeName) const;
     virtual std::string generateAttributeSetter(std::string memberName, std::string attributeName) const;
     virtual std::string generateMemberSetter(std::string memberName, std::string nodeName) const;
     virtual std::string generateAttributeParser(std::string memberName, std::string attributeName) const;
 };
 
-GENERATE_BUILTIN(UnsignedByteClass, "unsignedByte", "unsigned char")
+GENERATE_BUILTIN_NONCONST(UnsignedByteClass, "unsignedByte", "unsigned char")
     virtual std::string generateElementSetter(std::string memberName, std::string nodeName) const;
     virtual std::string generateAttributeSetter(std::string memberName, std::string attributeName) const;
     virtual std::string generateMemberSetter(std::string memberName, std::string nodeName) const;
@@ -52,12 +57,12 @@ GENERATE_BUILTIN(UnsignedByteClass, "unsignedByte", "unsigned char")
 };
 
 
-GENERATE_BUILTIN(ShortClass, "short", "short")};
-GENERATE_BUILTIN(UnsignedShortClass, "unsignedShort", "unsigned short")};
-GENERATE_BUILTIN(IntClass, "int", "int")};
-GENERATE_BUILTIN(UnsignedIntClass, "unsignedInt", "unsigned int")};
-GENERATE_BUILTIN(LongClass, "long", "long")};
-GENERATE_BUILTIN(UnsignedLongClass, "unsignedLong", "unsigned long")};
+GENERATE_BUILTIN_NONCONST(ShortClass, "short", "short")};
+GENERATE_BUILTIN_NONCONST(UnsignedShortClass, "unsignedShort", "unsigned short")};
+GENERATE_BUILTIN_NONCONST(IntClass, "int", "int")};
+GENERATE_BUILTIN_NONCONST(UnsignedIntClass, "unsignedInt", "unsigned int")};
+GENERATE_BUILTIN_NONCONST(LongClass, "long", "long")};
+GENERATE_BUILTIN_NONCONST(UnsignedLongClass, "unsignedLong", "unsigned long")};
 GENERATE_BUILTIN(StringClass, "string", "std::string")
     std::string getBaseHeader() const {
             return "<string>";
@@ -80,10 +85,10 @@ GENERATE_BUILTIN(StringClass, "string", "std::string")
     }
 };
 
-GENERATE_BUILTIN(FloatClass, "float", "float")};
-GENERATE_BUILTIN(DoubleClass, "double", "double")};
+GENERATE_BUILTIN_NONCONST(FloatClass, "float", "float")};
+GENERATE_BUILTIN_NONCONST(DoubleClass, "double", "double")};
 
-GENERATE_BUILTIN(BooleanClass, "boolean", "bool")
+GENERATE_BUILTIN_NONCONST(BooleanClass, "boolean", "bool")
     std::string generateElementSetter(std::string memberName, std::string nodeName) const {
         return "{ XercesString " + tempWithPostfix + "(" + memberName + " ? \"true\" : \"false\"); " + nodeName + "->setTextContent(" + tempWithPostfix + "); }";
     }

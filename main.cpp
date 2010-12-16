@@ -36,6 +36,9 @@ static void printUsage() {
     cerr << "USAGE: james [-v] [-d] output-dir list-of-XSL-documents" << endl;
     cerr << " -v\tVerbose mode" << endl;
     cerr << " -d\tGenerate default constructors" << endl;
+    cerr << " -nr\tDon't generate constructors taking required elements" << endl;
+    cerr << " -nv\tDon't generate constructors taking required elements and vectors" << endl;
+    cerr << " -a\tGenerate constructors taking all elements" << endl;
     cerr << endl;
     cerr << " Generates C++ classes for marshalling and unmarshalling XML to C++ objects according to the given schemas." << endl;
     cerr << " Files are output in the specified output directory and are named type.h and type.cpp" << endl;
@@ -52,6 +55,9 @@ map<FullName, shared_ptr<Class> > groups;
 
 bool verbose = false;
 bool generateDefaultCtor = false;
+bool generateRequiredCtor = true;
+bool generateRequiredAndVectorsCtor = true;
+bool generateAllCtor = false;
 
 static shared_ptr<Class> addClass(shared_ptr<Class> cl, map<FullName, shared_ptr<Class> >& to = classes) {
     if(to.find(cl->name) != to.end())
@@ -546,6 +552,13 @@ static void work(string outputDir, const vector<string>& schemaNames) {
     }
 }
 
+void doPostResolveInits() {
+    if(verbose) cerr << "Doing post-resolve work in preparation for writing headers and implementations." << endl;
+
+    for(map<FullName, shared_ptr<Class> >::iterator it = classes.begin(); it != classes.end(); it++)
+        it->second->doPostResolveInit();
+}
+
 /**
  * Reads the entire contents of an std::istream to a std::string.
  */
@@ -613,9 +626,34 @@ int main(int argc, char** argv) {
                 if(verbose) cerr << "Generating default constructors" << endl;
 
                 continue;
+            } else if(!strcmp(argv[1], "-nr")) {
+                generateRequiredCtor = false;
+                if(verbose) cerr << "Not generating constructors that take the required elements" << endl;
+
+                continue;
+            } else if(!strcmp(argv[1], "-nv")) {
+                generateRequiredAndVectorsCtor = false;
+                if(verbose) cerr << "Not generating constructors that take the required elements and vectors" << endl;
+
+                continue;
+            } else if(!strcmp(argv[1], "-a")) {
+                generateAllCtor = true;
+                if(verbose) cerr << "Generating constructors that take all elements" << endl;
+
+                continue;
             }
 
             break;
+        }
+
+        //sanity check the ctor generation settings
+        if(!generateDefaultCtor && !generateRequiredCtor && !generateRequiredAndVectorsCtor) {
+            if(!generateAllCtor)
+                cerr << "Tried to generate code without any constructors" << endl;
+            else
+                cerr << "Tried to generate code with only the 'all' constructors, which would make dealing with optional elements too hard" << endl;
+
+            return 1;
         }
 
         XMLPlatformUtils::Initialize();
@@ -654,6 +692,8 @@ int main(int argc, char** argv) {
             schemaNames.push_back(argv[x]);
 
         work(outputDir, schemaNames);
+
+        doPostResolveInits();
 
         if(verbose) cerr << "Everything seems to be in order. Writing/updating headers and implementations as needed." << endl;
 

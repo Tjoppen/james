@@ -14,6 +14,9 @@ using namespace std;
 
 extern bool verbose;
 extern bool generateDefaultCtor;
+extern bool generateRequiredCtor;
+extern bool generateRequiredAndVectorsCtor;
+extern bool generateAllCtor;
 
 const string variablePostfix = "_james";
 
@@ -43,6 +46,26 @@ bool Class::isBuiltIn() const {
 
 bool Class::hasBase() const {
     return baseType.second.length() > 0;
+}
+
+void Class::addConstructor(const Constructor& constructor) {
+    //first make sure an identical constructor doesn't already exist
+    for(list<Constructor>::const_iterator it = constructors.begin(); it != constructors.end(); it++)
+        if(it->hasSameSignature(constructor))
+            return;
+
+    constructors.push_back(constructor);
+}
+
+void Class::doPostResolveInit() {
+    //figure out which constructors we need
+    if(generateDefaultCtor)             addConstructor(Constructor(this));
+    if(generateRequiredCtor)            addConstructor(Constructor(this, false, false));
+    if(generateRequiredAndVectorsCtor)  addConstructor(Constructor(this, true,  false));
+    if(generateAllCtor)                 addConstructor(Constructor(this, true,  true));
+
+    if(constructors.size() == 0)
+        throw runtime_error("No constructors in class " + getClassname());
 }
 
 std::list<Class::Member>::iterator Class::findMember(std::string name) {
@@ -264,64 +287,10 @@ void Class::writeImplementation(ostream& os) const {
     os << "using namespace james;" << endl;
 
     //constructors
-    list<Member> required = getRequiredElements(true);
-
-    //we can only add a default constructor if we have at least one required element
-    //otherwise that constructor effectively becomes a default constructor
-    if(generateDefaultCtor && required.size() > 0) {
-        if(base && !base->isSimple())
-            os << className << "::" << className << "() : " << base->getClassname() << "() {";
-        else
-            os << className << "::" << className << "() {";
-
-        os << "}" << endl << endl;
+    for(list<Constructor>::const_iterator it = constructors.begin(); it != constructors.end(); it++) {
+        it->writeBody(os);
+        os << endl;
     }
-
-    //first, the constructor that only requires the default elements
-    os << className << "::" << className << "(";
-
-    for(list<Member>::const_iterator it = required.begin(); it != required.end(); it++) {
-        if(it != required.begin())
-            os << ", ";
-
-        os << it->cl->getClassname() << " " << it->name;
-    }
-
-    os << ") ";
-    
-    if(required.size() > 0 || (base && !base->isSimple()))
-        os << ": ";
-
-    bool hasParens = false;
-
-    if(base && !base->isSimple()) {
-        //pass the base class' required elements
-        list<Member> baseRequired = base->getRequiredElements(true);
-
-        os << base->getClassname() << "(";
-
-        for(list<Member>::const_iterator it = baseRequired.begin(); it != baseRequired.end(); it++) {
-            if(it != baseRequired.begin())
-                os << ", ";
-
-            os << it->name;
-        }
-
-        os << ")";
-        hasParens = true;
-    }
-
-    //get only the ones that we require
-    list<Member> ourRequired = getRequiredElements(false);
-
-    for(list<Member>::const_iterator it = ourRequired.begin(); it != ourRequired.end(); it++) {
-        if(hasParens || it != ourRequired.begin())
-            os << ", ";
-
-        os << it->name << "(" << it->name << ")";
-    }
-
-    os << " {}" << endl;
 
     //method implementations
     //unmarshalling constructors
@@ -447,23 +416,10 @@ void Class::writeHeader(ostream& os) const {
         os << "public:" << endl;
 
         //constructors
-        //first, the constructor that only requires the default elements
-        list<Member> required = getRequiredElements(true);
-
-        //add default constructor if there are required elements
-        if(generateDefaultCtor && required.size() > 0)
-            os << className << "();" << endl;
-
-        os << className << "(";
-
-        for(list<Member>::const_iterator it = required.begin(); it != required.end(); it++) {
-            if(it != required.begin())
-                os << ", ";
-
-            os << it->cl->getClassname() << " " << it->name;
+        for(list<Constructor>::const_iterator it = constructors.begin(); it != constructors.end(); it++) {
+            it->writePrototype(os, true);
+            os << endl;
         }
-
-        os << ");" << endl;
 
         //prototypes
         //add constructor for unmarshalling this document from an istream of string
@@ -518,6 +474,10 @@ void Class::writeHeader(ostream& os) const {
     os << "#endif //_" << className << "_H" << endl;
 }
 
+bool Class::shouldUseConstReferences() const {
+    return true;
+}
+
 bool Class::Member::isArray() const {
     return maxOccurs > 1 || maxOccurs == UNBOUNDED;
 }
@@ -530,11 +490,11 @@ bool Class::Member::isRequired() const {
     return !isArray() && !isOptional();
 }
 
-std::list<Class::Member> Class::getRequiredElements(bool includeBase) const {
+std::list<Class::Member> Class::getElements(bool includeBase, bool vectors, bool optionals) const {
     std::list<Member> ret;
 
     if(includeBase && base)
-        ret = base->getRequiredElements(true);
+        ret = base->getElements(true, vectors, optionals);
 
     //regard the contents of a complexType with simpleContents as a required
     //element named "content" since we already have that as an element
@@ -548,8 +508,112 @@ std::list<Class::Member> Class::getRequiredElements(bool includeBase) const {
     }
 
     for(std::list<Member>::const_iterator it = members.begin(); it != members.end(); it++)
-        if(it->isRequired())
+        if(it->isRequired() || (it->isArray() && vectors) || (it->isOptional() && optionals))
             ret.push_back(*it);
 
     return ret;
+}
+
+Class::Constructor::Constructor(Class *cl) : cl(cl) {
+}
+
+Class::Constructor::Constructor(Class *cl, bool vectors, bool optionals) :
+        cl(cl) {
+    if(cl->base)
+        baseArgs = cl->base->getElements(true, vectors, optionals);
+
+    ourArgs = cl->getElements(false, vectors, optionals);
+}
+
+list<Class::Member> Class::Constructor::getAllArguments() const {
+    list<Class::Member> ret = baseArgs;
+
+    ret.insert(ret.end(), ourArgs.begin(), ourArgs.end());
+
+    return ret;
+}
+
+bool Class::Constructor::hasSameSignature(const Constructor& other) const {
+    list<Member> a = getAllArguments();
+    list<Member> b = other.getAllArguments();
+
+    if(a.size() != b.size())
+        return false;
+
+    list<Member>::iterator ita = a.begin(), itb = b.begin();
+
+    //return false if the arguments in any position are of different types or
+    //if one is an array but the other isn't
+    for(; ita != a.end(); ita++, itb++)
+        if(ita->cl->getClassname() != itb->cl->getClassname() || ita->isArray() != itb->isArray())
+            return false;
+
+    return true;
+}
+
+void Class::Constructor::writePrototype(ostream &os, bool withSemicolon) const {
+    list<Member> all = getAllArguments();
+
+    os << cl->getClassname() << "(";
+
+    for(list<Member>::const_iterator it = all.begin(); it != all.end(); it++) {
+        if(it != all.begin())
+            os << ", ";
+
+        if(it->isArray())
+            os << "const std::vector<";
+        else if(it->cl->shouldUseConstReferences())
+            os << "const ";
+
+        os << it->cl->getClassname();
+
+        if(it->isArray())
+            os << " >&";
+        else if(it->cl->shouldUseConstReferences())
+            os << "&";
+
+        os << " " << it->name;
+    }
+
+    os << ")";
+
+    if(withSemicolon)
+        os << ";";
+}
+
+void Class::Constructor::writeBody(ostream &os) const {
+    list<Member> all = getAllArguments();
+
+    os << cl->getClassname() << "::";
+
+    writePrototype(os, false);
+
+    if(all.size() > 0 || (cl->base && !cl->base->isSimple()))
+        os << " :" << endl << "\t";
+
+    bool hasParens = false;
+
+    if(cl->base && !cl->base->isSimple()) {
+        //pass the base class' elements
+        os << cl->base->getClassname() << "(";
+
+        for(list<Member>::const_iterator it = baseArgs.begin(); it != baseArgs.end(); it++) {
+            if(it != baseArgs.begin())
+                os << ", ";
+
+            os << it->name;
+        }
+
+        os << ")";
+        hasParens = true;
+    }
+
+    for(list<Member>::const_iterator it = ourArgs.begin(); it != ourArgs.end(); it++) {
+        if(hasParens || it != ourArgs.begin())
+            os << ", ";
+
+        os << it->name << "(" << it->name << ")";
+    }
+
+    os << " {" << endl << "}" << endl;
 }

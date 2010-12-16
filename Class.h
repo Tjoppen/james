@@ -44,6 +44,38 @@ public:
         bool isRequired() const;
     };
 
+private:
+    /**
+     * For dealing with constructor parameter lists.
+     */
+    class Constructor {
+    public:
+        Class *cl;
+        std::list<Member> baseArgs;
+        std::list<Member> ourArgs;
+
+        Constructor(Class *cl);
+        Constructor(Class *cl, bool vectors, bool optionals);
+
+        /**
+         * Concatenates and returns ourArgs and baseArgs.
+         */
+        std::list<Member> getAllArguments() const;
+
+        /**
+         * Returns whether this constructor has the same signature as the other.
+         */
+        bool hasSameSignature(const Constructor& other) const;
+
+        void writePrototype(std::ostream &os, bool withSemicolon) const;
+        void writeBody(std::ostream &os) const;
+    };
+
+    std::list<Constructor> constructors;
+
+    void addConstructor(const Constructor& constructor);
+
+public:
     enum ClassType {
         SIMPLE_TYPE,
         COMPLEX_TYPE,
@@ -71,6 +103,12 @@ public:
 
     std::list<Member>::iterator findMember(std::string name);
     void addMember(Member memberInfo);
+
+    /**
+     * Do work needed before writeImplementation() or writeHeader() are called.
+     * This method is called after the classes of each member has been resolved.
+     */
+    void doPostResolveInit();
 
     /**
      * Should return a code fragment that for appending all the members of this Class.
@@ -115,14 +153,22 @@ public:
      */
     virtual std::string getBaseHeader() const;
 
+    /**
+     * Returns whether the constructor should take const references to this class or not.
+     * Counter cases include xs:int, xs:byte etc.
+     */
+    virtual bool shouldUseConstReferences() const;
+
     std::set<std::string> getIncludedClasses() const;
     std::set<std::string> getPrototypeClasses() const;
 
     /**
      * Returns a list of the required elements of this Class.
+     * Also include vector elements if vectors == true.
+     * Also include optional elements if optionals == true.
      * Also includes those of its base if includingBase == true.
      */
-    std::list<Member> getRequiredElements(bool includeBase) const;
+    std::list<Member> getElements(bool includeBase, bool vectors, bool optionals) const;
 
     void writeImplementation(std::ostream& os) const;
     void writeHeader(std::ostream& os) const;
