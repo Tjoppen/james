@@ -33,8 +33,9 @@ using namespace xercesc;
 using namespace james;
 
 static void printUsage() {
-    cerr << "USAGE: james [-v] output-dir list-of-XSL-documents" << endl;
+    cerr << "USAGE: james [-v] [-d] output-dir list-of-XSL-documents" << endl;
     cerr << " -v\tVerbose mode" << endl;
+    cerr << " -d\tGenerate default constructors" << endl;
     cerr << endl;
     cerr << " Generates C++ classes for marshalling and unmarshalling XML to C++ objects according to the given schemas." << endl;
     cerr << " Files are output in the specified output directory and are named type.h and type.cpp" << endl;
@@ -50,6 +51,7 @@ map<FullName, shared_ptr<Class> > classes;
 map<FullName, shared_ptr<Class> > groups;
 
 bool verbose = false;
+bool generateDefaultCtor = false;
 
 static shared_ptr<Class> addClass(shared_ptr<Class> cl, map<FullName, shared_ptr<Class> >& to = classes) {
     if(to.find(cl->name) != to.end())
@@ -600,12 +602,20 @@ int main(int argc, char** argv) {
             return 1;
         }
 
-        if(argc > 3 && !strcmp(argv[1], "-v")) {
-            verbose = true;
-            cerr << "Verbose mode" << endl;
+        for(; argc > 3; argv++, argc--) {
+            if(!strcmp(argv[1], "-v")) {
+                verbose = true;
+                cerr << "Verbose mode" << endl;
 
-            argv++;
-            argc--;
+                continue;
+            } else if(!strcmp(argv[1], "-d")) {
+                generateDefaultCtor = true;
+                if(verbose) cerr << "Generating default constructors" << endl;
+
+                continue;
+            }
+
+            break;
         }
 
         XMLPlatformUtils::Initialize();

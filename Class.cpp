@@ -13,6 +13,7 @@
 using namespace std;
 
 extern bool verbose;
+extern bool generateDefaultCtor;
 
 const string variablePostfix = "_james";
 
@@ -267,7 +268,7 @@ void Class::writeImplementation(ostream& os) const {
 
     //we can only add a default constructor if we have at least one required element
     //otherwise that constructor effectively becomes a default constructor
-    if(required.size() > 0) {
+    if(generateDefaultCtor && required.size() > 0) {
         if(base && !base->isSimple())
             os << className << "::" << className << "() : " << base->getClassname() << "() {";
         else
@@ -450,7 +451,7 @@ void Class::writeHeader(ostream& os) const {
         list<Member> required = getRequiredElements(true);
 
         //add default constructor if there are required elements
-        if(required.size() > 0)
+        if(generateDefaultCtor && required.size() > 0)
             os << className << "();" << endl;
 
         os << className << "(";
