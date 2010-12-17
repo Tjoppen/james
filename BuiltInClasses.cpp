@@ -26,30 +26,30 @@ string BuiltInClass::generateAppender() const {
     throw runtime_error("generateAppender() called in BuiltInClass");
 }
 
-string BuiltInClass::generateElementSetter(string memberName, string nodeName) const {
+string BuiltInClass::generateElementSetter(string memberName, string nodeName, string tabs) const {
     ostringstream oss;
 
-    oss << "{" << endl;
-    oss << "stringstream " << ssWithPostfix << ";" << endl;
-    oss << "string " << convertedWithPostfix << ";" << endl;
-    oss << ssWithPostfix << " << " << memberName << ";" << endl;
-    oss << ssWithPostfix << " >> " << convertedWithPostfix << ";" << endl;
-    oss << nodeName << "->setTextContent(XercesString(" << convertedWithPostfix << "));" << endl;
-    oss << "}" << endl;
+    oss << tabs << "{" << endl;
+    oss << tabs << "\tstringstream " << ssWithPostfix << ";" << endl;
+    oss << tabs << "\tstring " << convertedWithPostfix << ";" << endl;
+    oss << tabs << "\t" << ssWithPostfix << " << " << memberName << ";" << endl;
+    oss << tabs << "\t" << ssWithPostfix << " >> " << convertedWithPostfix << ";" << endl;
+    oss << tabs << "\t" << nodeName << "->setTextContent(XercesString(" << convertedWithPostfix << "));" << endl;
+    oss << tabs << "}" << endl;
 
     return oss.str();
 }
 
-string BuiltInClass::generateAttributeSetter(string memberName, string attributeName) const {
+string BuiltInClass::generateAttributeSetter(string memberName, string attributeName, string tabs) const {
     ostringstream oss;
 
-    oss << "{" << endl;
-    oss << "stringstream " << ssWithPostfix << ";" << endl;
-    oss << "string " << convertedWithPostfix << ";" << endl;
-    oss << ssWithPostfix << " << " << memberName << ";" << endl;
-    oss << ssWithPostfix << " >> " << convertedWithPostfix << ";" << endl;
-    oss << attributeName << "->setValue(XercesString(" << convertedWithPostfix << "));" << endl;
-    oss << "}" << endl;
+    oss << tabs << "{" << endl;
+    oss << tabs << "\tstringstream " << ssWithPostfix << ";" << endl;
+    oss << tabs << "\tstring " << convertedWithPostfix << ";" << endl;
+    oss << tabs << "\t" << ssWithPostfix << " << " << memberName << ";" << endl;
+    oss << tabs << "\t" << ssWithPostfix << " >> " << convertedWithPostfix << ";" << endl;
+    oss << tabs << "\t" << attributeName << "->setValue(XercesString(" << convertedWithPostfix << "));" << endl;
+    oss << tabs << "}" << endl;
 
     return oss.str();
 }
@@ -58,26 +58,26 @@ string BuiltInClass::generateParser() const {
     throw runtime_error("generateParser() called in BuiltInClass");
 }
 
-string BuiltInClass::generateMemberSetter(string memberName, string nodeName) const {
+string BuiltInClass::generateMemberSetter(string memberName, string nodeName, string tabs) const {
     ostringstream oss;
 
-    oss << "{" << endl;
-    oss << "stringstream " << ssWithPostfix << ";" << endl;
-    oss << ssWithPostfix << " << XercesString(" << nodeName << "->getTextContent());" << endl;
-    oss << ssWithPostfix << " >> " << memberName << ";" << endl;
-    oss << "}" << endl;
+    oss << tabs << "{" << endl;
+    oss << tabs << "\tstringstream " << ssWithPostfix << ";" << endl;
+    oss << tabs << "\t" << ssWithPostfix << " << XercesString(" << nodeName << "->getTextContent());" << endl;
+    oss << tabs << "\t" << ssWithPostfix << " >> " << memberName << ";" << endl;
+    oss << tabs << "}" << endl;
 
     return oss.str();
 }
 
-string BuiltInClass::generateAttributeParser(string memberName, string attributeName) const {
+string BuiltInClass::generateAttributeParser(string memberName, string attributeName, string tabs) const {
     ostringstream oss;
 
-    oss << "{" << endl;
-    oss << "stringstream " << ssWithPostfix << ";" << endl;
-    oss << ssWithPostfix << " << XercesString(" << attributeName << "->getValue());" << endl;
-    oss << ssWithPostfix << " >> " << memberName << ";" << endl;
-    oss << "}" << endl;
+    oss << tabs << "{" << endl;
+    oss << tabs << "\tstringstream " << ssWithPostfix << ";" << endl;
+    oss << tabs << "\t" << ssWithPostfix << " << XercesString(" << attributeName << "->getValue());" << endl;
+    oss << tabs << "\t" << ssWithPostfix << " >> " << memberName << ";" << endl;
+    oss << tabs << "}" << endl;
 
     return oss.str();
 }
@@ -85,58 +85,58 @@ string BuiltInClass::generateAttributeParser(string memberName, string attribute
 /**
  * ByteClass stuff
  */
-string ByteClass::generateElementSetter(string memberName, string nodeName) const {
+string ByteClass::generateElementSetter(string memberName, string nodeName, string tabs) const {
     ostringstream oss;
 
-    oss << "{" << endl;
-    oss << "stringstream " << ssWithPostfix << ";" << endl;
-    oss << "string " << convertedWithPostfix << ";" << endl;
-    oss << ssWithPostfix << " << (int)" << memberName << ";" << endl;
-    oss << ssWithPostfix << " >> " << convertedWithPostfix << ";" << endl;
-    oss << nodeName << "->setTextContent(XercesString(" << convertedWithPostfix << "));" << endl;
-    oss << "}" << endl;
+    oss << tabs << "{" << endl;
+    oss << tabs << "\tstringstream " << ssWithPostfix << ";" << endl;
+    oss << tabs << "\tstring " << convertedWithPostfix << ";" << endl;
+    oss << tabs << "\t" << ssWithPostfix << " << (int)" << memberName << ";" << endl;
+    oss << tabs << "\t" << ssWithPostfix << " >> " << convertedWithPostfix << ";" << endl;
+    oss << tabs << nodeName << "->setTextContent(XercesString(" << convertedWithPostfix << "));" << endl;
+    oss << tabs << "}" << endl;
 
     return oss.str();
 }
 
-string ByteClass::generateAttributeSetter(string memberName, string attributeName) const {
+string ByteClass::generateAttributeSetter(string memberName, string attributeName, string tabs) const {
     ostringstream oss;
 
-    oss << "{" << endl;
-    oss << "stringstream " << ssWithPostfix << ";" << endl;
-    oss << "string " << convertedWithPostfix << ";" << endl;
-    oss << ssWithPostfix << " << (int)" << memberName << ";" << endl;
-    oss << ssWithPostfix << " >> " << convertedWithPostfix << ";" << endl;
-    oss << attributeName << "->setValue(XercesString(" << convertedWithPostfix << "));" << endl;
-    oss << "}" << endl;
+    oss << tabs << "{" << endl;
+    oss << tabs << "\tstringstream " << ssWithPostfix << ";" << endl;
+    oss << tabs << "\tstring " << convertedWithPostfix << ";" << endl;
+    oss << tabs << "\t" << ssWithPostfix << " << (int)" << memberName << ";" << endl;
+    oss << tabs << "\t" << ssWithPostfix << " >> " << convertedWithPostfix << ";" << endl;
+    oss << tabs << "\t" << attributeName << "->setValue(XercesString(" << convertedWithPostfix << "));" << endl;
+    oss << tabs << "}" << endl;
 
     return oss.str();
 }
 
-string ByteClass::generateMemberSetter(string memberName, string nodeName) const {
+string ByteClass::generateMemberSetter(string memberName, string nodeName, string tabs) const {
     ostringstream oss;
 
-    oss << "{" << endl;
-    oss << "stringstream " << ssWithPostfix << ";" << endl;
-    oss << "int " << tempWithPostfix << ";" << endl;
-    oss << ssWithPostfix << " << XercesString(" << nodeName << "->getTextContent());" << endl;
-    oss << ssWithPostfix << " >> " << tempWithPostfix << ";" << endl;
-    oss << memberName << " = " << tempWithPostfix << ";" << endl;
-    oss << "}" << endl;
+    oss << tabs << "{" << endl;
+    oss << tabs << "\tstringstream " << ssWithPostfix << ";" << endl;
+    oss << tabs << "\tint " << tempWithPostfix << ";" << endl;
+    oss << tabs << "\t" << ssWithPostfix << " << XercesString(" << nodeName << "->getTextContent());" << endl;
+    oss << tabs << "\t" << ssWithPostfix << " >> " << tempWithPostfix << ";" << endl;
+    oss << tabs << "\t" << memberName << " = " << tempWithPostfix << ";" << endl;
+    oss << tabs << "}" << endl;
 
     return oss.str();
 }
 
-string ByteClass::generateAttributeParser(string memberName, string attributeName) const {
+string ByteClass::generateAttributeParser(string memberName, string attributeName, string tabs) const {
     ostringstream oss;
 
-    oss << "{" << endl;
-    oss << "stringstream " << ssWithPostfix << ";" << endl;
-    oss << "int " << tempWithPostfix << ";" << endl;
-    oss << ssWithPostfix << " << XercesString(" << attributeName << "->getValue());" << endl;
-    oss << ssWithPostfix << " >> " << tempWithPostfix << ";" << endl;
-    oss << memberName << " = " << tempWithPostfix << ";" << endl;
-    oss << "}" << endl;
+    oss << tabs << "{" << endl;
+    oss << tabs << "\tstringstream " << ssWithPostfix << ";" << endl;
+    oss << tabs << "\tint " << tempWithPostfix << ";" << endl;
+    oss << tabs << "\t" << ssWithPostfix << " << XercesString(" << attributeName << "->getValue());" << endl;
+    oss << tabs << "\t" << ssWithPostfix << " >> " << tempWithPostfix << ";" << endl;
+    oss << tabs << "\t" << memberName << " = " << tempWithPostfix << ";" << endl;
+    oss << tabs << "}" << endl;
 
     return oss.str();
 }
@@ -144,58 +144,58 @@ string ByteClass::generateAttributeParser(string memberName, string attributeNam
 /**
  * UnsignedByteClass stuff
  */
-string UnsignedByteClass::generateElementSetter(string memberName, string nodeName) const {
+string UnsignedByteClass::generateElementSetter(string memberName, string nodeName, string tabs) const {
     ostringstream oss;
 
-    oss << "{" << endl;
-    oss << "stringstream " << ssWithPostfix << ";" << endl;
-    oss << "string " << convertedWithPostfix << ";" << endl;
-    oss << ssWithPostfix << " << (unsigned int)" << memberName << ";" << endl;
-    oss << ssWithPostfix << " >> " << convertedWithPostfix << ";" << endl;
-    oss << nodeName << "->setTextContent(XercesString(" << convertedWithPostfix << "));" << endl;
-    oss << "}" << endl;
+    oss << tabs << "{" << endl;
+    oss << tabs << "\tstringstream " << ssWithPostfix << ";" << endl;
+    oss << tabs << "\tstring " << convertedWithPostfix << ";" << endl;
+    oss << tabs << "\t" << ssWithPostfix << " << (unsigned int)" << memberName << ";" << endl;
+    oss << tabs << "\t" << ssWithPostfix << " >> " << convertedWithPostfix << ";" << endl;
+    oss << tabs << "\t" << nodeName << "->setTextContent(XercesString(" << convertedWithPostfix << "));" << endl;
+    oss << tabs << "}" << endl;
 
     return oss.str();
 }
 
-string UnsignedByteClass::generateAttributeSetter(string memberName, string attributeName) const {
+string UnsignedByteClass::generateAttributeSetter(string memberName, string attributeName, string tabs) const {
     ostringstream oss;
 
-    oss << "{" << endl;
-    oss << "stringstream " << ssWithPostfix << ";" << endl;
-    oss << "string " << convertedWithPostfix << ";" << endl;
-    oss << ssWithPostfix << " << (unsigned int)" << memberName << ";" << endl;
-    oss << ssWithPostfix << " >> " << convertedWithPostfix << ";" << endl;
-    oss << attributeName << "->setValue(XercesString(" << convertedWithPostfix << "));" << endl;
-    oss << "}" << endl;
+    oss << tabs << "{" << endl;
+    oss << tabs << "\tstringstream " << ssWithPostfix << ";" << endl;
+    oss << tabs << "\tstring " << convertedWithPostfix << ";" << endl;
+    oss << tabs << "\t" << ssWithPostfix << " << (unsigned int)" << memberName << ";" << endl;
+    oss << tabs << "\t" << ssWithPostfix << " >> " << convertedWithPostfix << ";" << endl;
+    oss << tabs << "\t" << attributeName << "->setValue(XercesString(" << convertedWithPostfix << "));" << endl;
+    oss << tabs << "}" << endl;
 
     return oss.str();
 }
 
-string UnsignedByteClass::generateMemberSetter(string memberName, string nodeName) const {
+string UnsignedByteClass::generateMemberSetter(string memberName, string nodeName, string tabs) const {
     ostringstream oss;
 
-    oss << "{" << endl;
-    oss << "stringstream " << ssWithPostfix << ";" << endl;
-    oss << "unsigned int " << tempWithPostfix << ";" << endl;
-    oss << ssWithPostfix << " << XercesString(" << nodeName << "->getTextContent());" << endl;
-    oss << ssWithPostfix << " >> " << tempWithPostfix << ";" << endl;
-    oss << memberName << " = " << tempWithPostfix << ";" << endl;
-    oss << "}" << endl;
+    oss << tabs << "{" << endl;
+    oss << tabs << "\tstringstream " << ssWithPostfix << ";" << endl;
+    oss << tabs << "\tunsigned int " << tempWithPostfix << ";" << endl;
+    oss << tabs << "\t" << ssWithPostfix << " << XercesString(" << nodeName << "->getTextContent());" << endl;
+    oss << tabs << "\t" << ssWithPostfix << " >> " << tempWithPostfix << ";" << endl;
+    oss << tabs << "\t" << memberName << " = " << tempWithPostfix << ";" << endl;
+    oss << tabs << "}" << endl;
 
     return oss.str();
 }
 
-string UnsignedByteClass::generateAttributeParser(string memberName, string attributeName) const {
+string UnsignedByteClass::generateAttributeParser(string memberName, string attributeName, string tabs) const {
     ostringstream oss;
 
-    oss << "{" << endl;
-    oss << "stringstream " << ssWithPostfix << ";" << endl;
-    oss << "unsigned int " << tempWithPostfix << ";" << endl;
-    oss << ssWithPostfix << " << XercesString(" << attributeName << "->getValue());" << endl;
-    oss << ssWithPostfix << " >> " << tempWithPostfix << ";" << endl;
-    oss << memberName << " = " << tempWithPostfix << ";" << endl;
-    oss << "}" << endl;
+    oss << tabs << "{" << endl;
+    oss << tabs << "\tstringstream " << ssWithPostfix << ";" << endl;
+    oss << tabs << "\tunsigned int " << tempWithPostfix << ";" << endl;
+    oss << tabs << "\t" << ssWithPostfix << " << XercesString(" << attributeName << "->getValue());" << endl;
+    oss << tabs << "\t" << ssWithPostfix << " >> " << tempWithPostfix << ";" << endl;
+    oss << tabs << "\t" << memberName << " = " << tempWithPostfix << ";" << endl;
+    oss << tabs << "}" << endl;
 
     return oss.str();
 }

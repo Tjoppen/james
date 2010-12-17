@@ -18,11 +18,11 @@ public:
     bool isBuiltIn() const;
 
     std::string generateAppender() const;
-    virtual std::string generateElementSetter(std::string memberName, std::string nodeName) const;
-    virtual std::string generateAttributeSetter(std::string memberName, std::string attributeName) const;
+    virtual std::string generateElementSetter(std::string memberName, std::string nodeName, std::string tabs) const;
+    virtual std::string generateAttributeSetter(std::string memberName, std::string attributeName, std::string tabs) const;
     std::string generateParser() const;
-    virtual std::string generateMemberSetter(std::string memberName, std::string nodeName) const;
-    virtual std::string generateAttributeParser(std::string memberName, std::string attributeName) const;
+    virtual std::string generateMemberSetter(std::string memberName, std::string nodeName, std::string tabs) const;
+    virtual std::string generateAttributeParser(std::string memberName, std::string attributeName, std::string tabs) const;
 };
 
 #define GENERATE_BUILTIN(name, xslName, classname)\
@@ -43,17 +43,17 @@ public:\
     name() : base(override) {}
 
 GENERATE_BUILTIN_NONCONST(ByteClass, "byte", "char")
-    virtual std::string generateElementSetter(std::string memberName, std::string nodeName) const;
-    virtual std::string generateAttributeSetter(std::string memberName, std::string attributeName) const;
-    virtual std::string generateMemberSetter(std::string memberName, std::string nodeName) const;
-    virtual std::string generateAttributeParser(std::string memberName, std::string attributeName) const;
+    virtual std::string generateElementSetter(std::string memberName, std::string nodeName, std::string tabs) const;
+    virtual std::string generateAttributeSetter(std::string memberName, std::string attributeName, std::string tabs) const;
+    virtual std::string generateMemberSetter(std::string memberName, std::string nodeName, std::string tabs) const;
+    virtual std::string generateAttributeParser(std::string memberName, std::string attributeName, std::string tabs) const;
 };
 
 GENERATE_BUILTIN_NONCONST(UnsignedByteClass, "unsignedByte", "unsigned char")
-    virtual std::string generateElementSetter(std::string memberName, std::string nodeName) const;
-    virtual std::string generateAttributeSetter(std::string memberName, std::string attributeName) const;
-    virtual std::string generateMemberSetter(std::string memberName, std::string nodeName) const;
-    virtual std::string generateAttributeParser(std::string memberName, std::string attributeName) const;
+    virtual std::string generateElementSetter(std::string memberName, std::string nodeName, std::string tabs) const;
+    virtual std::string generateAttributeSetter(std::string memberName, std::string attributeName, std::string tabs) const;
+    virtual std::string generateMemberSetter(std::string memberName, std::string nodeName, std::string tabs) const;
+    virtual std::string generateAttributeParser(std::string memberName, std::string attributeName, std::string tabs) const;
 };
 
 
@@ -68,20 +68,20 @@ GENERATE_BUILTIN(StringClass, "string", "std::string")
             return "<string>";
     }
 
-    std::string generateElementSetter(std::string memberName, std::string nodeName) const {
-        return "{ XercesString " + tempWithPostfix + "(" + memberName + "); " + nodeName + "->setTextContent(" + tempWithPostfix + "); }";
+    std::string generateElementSetter(std::string memberName, std::string nodeName, std::string tabs) const {
+        return tabs + "{ XercesString " + tempWithPostfix + "(" + memberName + "); " + nodeName + "->setTextContent(" + tempWithPostfix + "); }";
     }
 
-    std::string generateAttributeSetter(std::string memberName, std::string attributeName) const {
-        return "{ XercesString " + tempWithPostfix + "(" + memberName + "); " + attributeName + "->setValue(" + tempWithPostfix + "); }";
+    std::string generateAttributeSetter(std::string memberName, std::string attributeName, std::string tabs) const {
+        return tabs + "{ XercesString " + tempWithPostfix + "(" + memberName + "); " + attributeName + "->setValue(" + tempWithPostfix + "); }";
     }
 
-    std::string generateMemberSetter(std::string memberName, std::string nodeName) const {
-        return memberName + " = XercesString(" + nodeName + "->getTextContent());";
+    std::string generateMemberSetter(std::string memberName, std::string nodeName, std::string tabs) const {
+        return tabs + memberName + " = XercesString(" + nodeName + "->getTextContent());";
     }
 
-    std::string generateAttributeParser(std::string memberName, std::string attributeName) const {
-        return memberName + " = XercesString(" + attributeName + "->getValue());";
+    std::string generateAttributeParser(std::string memberName, std::string attributeName, std::string tabs) const {
+        return tabs + memberName + " = XercesString(" + attributeName + "->getValue());";
     }
 };
 
@@ -89,34 +89,34 @@ GENERATE_BUILTIN_NONCONST(FloatClass, "float", "float")};
 GENERATE_BUILTIN_NONCONST(DoubleClass, "double", "double")};
 
 GENERATE_BUILTIN_NONCONST(BooleanClass, "boolean", "bool")
-    std::string generateElementSetter(std::string memberName, std::string nodeName) const {
-        return "{ XercesString " + tempWithPostfix + "(" + memberName + " ? \"true\" : \"false\"); " + nodeName + "->setTextContent(" + tempWithPostfix + "); }";
+    std::string generateElementSetter(std::string memberName, std::string nodeName, std::string tabs) const {
+        return tabs + "{ XercesString " + tempWithPostfix + "(" + memberName + " ? \"true\" : \"false\"); " + nodeName + "->setTextContent(" + tempWithPostfix + "); }";
     }
 
-    std::string generateAttributeSetter(std::string memberName, std::string attributeName) const {
-        return "{ XercesString " + tempWithPostfix + "(" + memberName + " ? \"true\" : \"false\"); " + attributeName + "->setValue(" + tempWithPostfix + "); }";
+    std::string generateAttributeSetter(std::string memberName, std::string attributeName, std::string tabs) const {
+        return tabs + "{ XercesString " + tempWithPostfix + "(" + memberName + " ? \"true\" : \"false\"); " + attributeName + "->setValue(" + tempWithPostfix + "); }";
     }
 
-    std::string generateMemberSetter(std::string memberName, std::string nodeName) const {
+    std::string generateMemberSetter(std::string memberName, std::string nodeName, std::string tabs) const {
         std::ostringstream oss;
 
-        oss << "{" << std::endl;
-        oss << "//TODO: Strip string prior to this?" << std::endl;
-        oss << "XercesString " << tempWithPostfix << "(" << nodeName << "->getTextContent());" << std::endl;
-        oss << memberName << " = " << tempWithPostfix << " == \"true\" || " << tempWithPostfix << " == \"1\";" << std::endl;
-        oss << "}" << std::endl;
+        oss << tabs << "{" << std::endl;
+        oss << tabs << "//TODO: Strip string prior to this?" << std::endl;
+        oss << tabs << "XercesString " << tempWithPostfix << "(" << nodeName << "->getTextContent());" << std::endl;
+        oss << tabs << memberName << " = " << tempWithPostfix << " == \"true\" || " << tempWithPostfix << " == \"1\";" << std::endl;
+        oss << tabs << "}" << std::endl;
 
         return oss.str();
     }
 
-    std::string generateAttributeParser(std::string memberName, std::string attributeName) const {
+    std::string generateAttributeParser(std::string memberName, std::string attributeName, std::string tabs) const {
         std::ostringstream oss;
 
-        oss << "{" << std::endl;
-        oss << "//TODO: Strip string prior to this?" << std::endl;
-        oss << "XercesString " << tempWithPostfix << "(" << attributeName << "->getValue());" << std::endl;
-        oss << memberName << " = " << tempWithPostfix << " == \"true\" || " << tempWithPostfix << " == \"1\";" << std::endl;
-        oss << "}" << std::endl;
+        oss << tabs << "{" << std::endl;
+        oss << tabs << "//TODO: Strip string prior to this?" << std::endl;
+        oss << tabs << "XercesString " << tempWithPostfix << "(" << attributeName << "->getValue());" << std::endl;
+        oss << tabs << memberName << " = " << tempWithPostfix << " == \"true\" || " << tempWithPostfix << " == \"1\";" << std::endl;
+        oss << tabs << "}" << std::endl;
 
         return oss.str();
     }

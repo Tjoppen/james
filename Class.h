@@ -121,12 +121,12 @@ public:
      * @param memberName The name of the member variable of
      * @param nodeName   The name of the DOMElement to set
      */
-    virtual std::string generateElementSetter(std::string memberName, std::string nodeName) const;
+    virtual std::string generateElementSetter(std::string memberName, std::string nodeName, std::string tabs) const;
 
     /**
      * Should return a code fragment that sets the node value of a DOMAttr to the string representation of the member the specified name.
      */
-    virtual std::string generateAttributeSetter(std::string memberName, std::string attributeName) const;
+    virtual std::string generateAttributeSetter(std::string memberName, std::string attributeName, std::string tabs) const;
 
     /**
      * Should return a code fragment that for parsing all the members of this Class.
@@ -136,12 +136,12 @@ public:
     /**
      * Should return a code fragment that parses the value of a DOMElement into the named member.
      */
-    virtual std::string generateMemberSetter(std::string memberName, std::string nodeName) const;
+    virtual std::string generateMemberSetter(std::string memberName, std::string nodeName, std::string tabs) const;
 
     /**
      * Should return a code fragment that parses the value of a DOMAttr into the named member.
      */
-    virtual std::string generateAttributeParser(std::string memberName, std::string attributeName) const;
+    virtual std::string generateAttributeParser(std::string memberName, std::string attributeName, std::string tabs) const;
 
     /**
      * Should return the name with which to refer to this Class.
