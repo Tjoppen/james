@@ -33,12 +33,13 @@ using namespace xercesc;
 using namespace james;
 
 static void printUsage() {
-    cerr << "USAGE: james [-v] [-d] output-dir list-of-XSL-documents" << endl;
+    cerr << "USAGE: james [-v] [-d] [-nr] [-nv] [-a] [-cmake targetname] output-dir list-of-XSL-documents" << endl;
     cerr << " -v\tVerbose mode" << endl;
     cerr << " -d\tGenerate default constructors" << endl;
     cerr << " -nr\tDon't generate constructors taking required elements" << endl;
     cerr << " -nv\tDon't generate constructors taking required elements and vectors" << endl;
     cerr << " -a\tGenerate constructors taking all elements" << endl;
+    cerr << " -cmake\tGenerate CMakeLists.txt with all generated .cpp files as part of a library with the specified target name" << endl;
     cerr << endl;
     cerr << " Generates C++ classes for marshalling and unmarshalling XML to C++ objects according to the given schemas." << endl;
     cerr << " Files are output in the specified output directory and are named type.h and type.cpp" << endl;
@@ -58,6 +59,7 @@ bool generateDefaultCtor = false;
 bool generateRequiredCtor = true;
 bool generateRequiredAndVectorsCtor = true;
 bool generateAllCtor = false;
+static std::string cmakeTargetName;
 
 static shared_ptr<Class> addClass(shared_ptr<Class> cl, map<FullName, shared_ptr<Class> >& to = classes) {
     if(to.find(cl->name) != to.end())
@@ -608,6 +610,20 @@ static void diffAndReplace(string fileName, string newContents) {
     }
 }
 
+string generateCMakeLists() {
+    ostringstream oss;
+
+    oss << "add_library(" << cmakeTargetName << endl;
+
+    for(map<FullName, shared_ptr<Class> >::iterator it = classes.begin(); it != classes.end(); it++)
+        if(!it->second->isSimple())
+            oss << "\t" << it->first.second << ".cpp" << endl;
+
+    oss << ")" << endl;
+
+    return oss.str();
+}
+
 int main(int argc, char** argv) {
     try {
         if(argc <= 2) {
@@ -639,6 +655,14 @@ int main(int argc, char** argv) {
             } else if(!strcmp(argv[1], "-a")) {
                 generateAllCtor = true;
                 if(verbose) cerr << "Generating constructors that take all elements" << endl;
+
+                continue;
+            } else if(!strcmp(argv[1], "-cmake")) {
+                cmakeTargetName = argv[2];
+                if(verbose) cerr << "CMake target name: " << cmakeTargetName << endl;
+
+                argv++;
+                argc--;
 
                 continue;
             }
@@ -721,6 +745,13 @@ int main(int argc, char** argv) {
                     diffAndReplace(name.str(), header.str());
                 }
             }
+        }
+
+        if(cmakeTargetName.size() > 0) {
+            ostringstream name;
+            name << outputDir << "/CMakeLists.txt";
+
+            diffAndReplace(name.str(), generateCMakeLists());
         }
 
         XMLPlatformUtils::Terminate();
