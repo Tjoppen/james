@@ -613,6 +613,7 @@ static void diffAndReplace(string fileName, string newContents) {
 string generateCMakeLists() {
     ostringstream oss;
 
+    oss << "cmake_minimum_required(VERSION 2.6)" << endl;
     oss << "add_library(" << cmakeTargetName << endl;
 
     for(map<FullName, shared_ptr<Class> >::iterator it = classes.begin(); it != classes.end(); it++)
