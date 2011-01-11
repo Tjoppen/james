@@ -2,7 +2,8 @@ add_library(libjames
 	HexBinary.cpp
 	XercesString.cpp
 	XMLDocument.cpp
-	XMLObject.cpp)
+	XMLObject.cpp
+)
 
 set_target_properties(libjames PROPERTIES OUTPUT_NAME james)
 install(TARGETS libjames DESTINATION lib)
@@ -13,5 +14,6 @@ install(FILES
 	XMLDocument.h
 	XMLObject.h
 	optional.h
-	DESTINATION include/libjames)
+	DESTINATION include/libjames
+)
 
