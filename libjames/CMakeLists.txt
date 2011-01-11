@@ -1,10 +1,11 @@
-add_library(james
+add_library(libjames
 	HexBinary.cpp
 	XercesString.cpp
 	XMLDocument.cpp
 	XMLObject.cpp)
 
-install(TARGETS james DESTINATION lib)
+set_target_properties(libjames PROPERTIES OUTPUT_NAME james)
+install(TARGETS libjames DESTINATION lib)
 
 install(FILES
 	HexBinary.h
