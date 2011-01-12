@@ -151,7 +151,7 @@ const char *keywords[] = {
 
 static void initKeywordSet() {
     //stuff keywords into keywordSet for fast lookup
-    for(int x = 0; x < sizeof(keywords) / sizeof(const char*); x++)
+    for(size_t x = 0; x < sizeof(keywords) / sizeof(const char*); x++)
         keywordSet.insert(keywords[x]);
 }
 
@@ -159,7 +159,7 @@ static string fixIdentifier(string str) {
     //strip any bad characters such as dots, colons, semicolons..
     string ret;
 
-    for(int x = 0; x < str.size(); x++) {
+    for(size_t x = 0; x < str.size(); x++) {
         char c = str[x];
 
         if((c >= 'a' && c <= 'z') ||
@@ -236,7 +236,7 @@ static vector<DOMElement*> getChildElementsByTagName(DOMElement *parent, string 
     vector<DOMElement*> childElements = getChildElements(parent);
     vector<DOMElement*> ret;
 
-    for(int x = 0; x < childElements.size(); x++) {
+    for(size_t x = 0; x < childElements.size(); x++) {
         if(childElements[x]->getLocalName() && XercesString(childElements[x]->getLocalName()) == childName) {
             ret.push_back(childElements[x]);
         }
@@ -264,7 +264,7 @@ static void parseSequence(DOMElement *parent, DOMElement *sequence, shared_ptr<C
 
     children.insert(children.end(), subSequences.begin(), subSequences.end());
     
-    for(int x = 0; x < children.size(); x++) {
+    for(size_t x = 0; x < children.size(); x++) {
         DOMElement *child = children[x];
             
         int minOccurs = 1;
@@ -338,7 +338,7 @@ static void parseSequence(DOMElement *parent, DOMElement *sequence, shared_ptr<C
 
     vector<DOMElement*> choices = getChildElementsByTagName(sequence, "choice");
 
-    for(int x = 0; x < choices.size(); x++) {
+    for(size_t x = 0; x < choices.size(); x++) {
         DOMElement *choice = choices[x];
 
         parseSequence(parent, choice, cl, true);
@@ -357,7 +357,7 @@ static void parseComplexType(DOMElement *element, FullName fullName, shared_ptr<
     
     vector<DOMElement*> childElements = getChildElements(element);
 
-    for(int x = 0; x < childElements.size(); x++) {
+    for(size_t x = 0; x < childElements.size(); x++) {
         DOMElement *child = childElements[x];
         XercesString name(child->getLocalName());
 
@@ -442,8 +442,8 @@ static void parseElement(DOMElement *element, string tns) {
     if(nodeNs != XSL || (
             nodeName != "complexType" &&
             nodeName != "element" &&
-            nodeName != "simpleType") &&
-            nodeName != "attributeGroup")
+            nodeName != "simpleType" &&
+            nodeName != "attributeGroup"))
         return;
 
     //<complexType>, <element> or <simpleType>
@@ -520,7 +520,7 @@ static void work(string outputDir, const vector<string>& schemaNames) {
 
         vector<DOMElement*> elements = getChildElements(root);
 
-        for(int x = 0; x < elements.size(); x++)
+        for(size_t x = 0; x < elements.size(); x++)
             parseElement(elements[x], tns);
     }
 
