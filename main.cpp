@@ -595,7 +595,11 @@ static void diffAndReplace(string fileName, string newContents) {
         if(verbose) cerr << ". " << fileName << endl;
     } else {
         //contents differ - either original does not exist or the schema changed for this type
+#ifdef WIN32
+        if(_unlink(fileName.c_str())) {
+#else
         if(unlink(fileName.c_str())) {
+#endif
             //new file added
             cerr << "A " << fileName << endl;
         } else {
