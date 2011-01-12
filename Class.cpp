@@ -26,11 +26,11 @@ const string convertedWithPostfix = "converted" + variablePostfix;
 const string ssWithPostfix = "ss" + variablePostfix;
 
 Class::Class(FullName name, ClassType type) : name(name), type(type), 
-        base(NULL), isDocument(false) {
+        isDocument(false), base(NULL)  {
 }
 
 Class::Class(FullName name, ClassType type, FullName baseType) : name(name),
-        type(type), base(NULL), isDocument(false), baseType(baseType) {
+        type(type), isDocument(false), baseType(baseType), base(NULL) {
 }
 
 Class::~Class() {
@@ -369,7 +369,7 @@ set<string> Class::getIncludedClasses() const {
 
     //return classes of any simple non-builtin elements and any required non-simple elements
     for(list<Member>::const_iterator it = members.begin(); it != members.end(); it++)
-        if(!it->cl->isBuiltIn() && it->cl->isSimple() || it->isRequired() && !it->cl->isSimple())
+        if((!it->cl->isBuiltIn() && it->cl->isSimple()) || (it->isRequired() && !it->cl->isSimple()))
             classesToInclude.insert(it->cl->getClassname());
 
     return classesToInclude;
