@@ -61,8 +61,8 @@ GENERATE_BUILTIN_NONCONST(ShortClass, "short", "short")};
 GENERATE_BUILTIN_NONCONST(UnsignedShortClass, "unsignedShort", "unsigned short")};
 GENERATE_BUILTIN_NONCONST(IntClass, "int", "int")};
 GENERATE_BUILTIN_NONCONST(UnsignedIntClass, "unsignedInt", "unsigned int")};
-GENERATE_BUILTIN_NONCONST(LongClass, "long", "long")};
-GENERATE_BUILTIN_NONCONST(UnsignedLongClass, "unsignedLong", "unsigned long")};
+GENERATE_BUILTIN_NONCONST(LongClass, "long", "long long")};
+GENERATE_BUILTIN_NONCONST(UnsignedLongClass, "unsignedLong", "unsigned long long")};
 GENERATE_BUILTIN(StringClass, "string", "std::string")
     std::string getBaseHeader() const {
             return "<string>";
