@@ -126,7 +126,7 @@ string Class::generateAppender() const {
         } else if(it->isOptional()) {
             //insert a non-null check
             setterName += ".get()";
-            oss << "\tif(" << name << ")" << endl;
+            oss << "\tif(" << name << ".isSet())" << endl;
         }
 
         oss << "\t{" << endl;
