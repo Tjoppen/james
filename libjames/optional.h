@@ -8,6 +8,8 @@
 #ifndef _OPTIONAL_H
 #define	_OPTIONAL_H
 
+#include "Exceptions.h"
+
 namespace james {
     /**
      * Like boost::optional, except with pointer storage.
@@ -34,6 +36,11 @@ namespace james {
                 delete t;
 
             t = newT;
+        }
+
+        void throwIfNotSet() const {
+            if(!isSet())
+                throw UnsetOptionalException("Tried to access optional value that isn't set");
         }
     public:
         optional() : t(NULL) {
@@ -71,18 +78,26 @@ namespace james {
         }
 
         const T* operator -> () const {
+            throwIfNotSet();
+
             return t;
         }
 
         T* operator -> () {
+            throwIfNotSet();
+
             return t;
         }
 
         const T& get() const {
+            throwIfNotSet();
+
             return *t;
         }
 
         T& get() {
+            throwIfNotSet();
+
             return *t;
         }
 

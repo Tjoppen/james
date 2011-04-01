@@ -27,6 +27,12 @@ namespace james {
     public:
         OutOfMemoryException(const std::string& msg) throw();
     };
+
+    //thrown when the user attempts to access the value of an unset james::optional
+    class UnsetOptionalException : public Exception {
+    public:
+        UnsetOptionalException(const std::string& msg) throw();
+    };
 };
 
 #endif // EXCEPTIONS_H
