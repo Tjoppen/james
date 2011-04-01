@@ -55,7 +55,11 @@ namespace james {
         operator bool () const {
             return t;
         }
-        
+
+        bool isSet() const {
+            return t;
+        }
+
         optional& operator = (const T& rhs) {
             assign(&rhs);
             return *this;
