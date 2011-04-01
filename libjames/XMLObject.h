@@ -8,7 +8,6 @@
 #ifndef _XMLOBJECT_H
 #define	_XMLOBJECT_H
 
-#include <exception>
 #include <string>
 #include <xercesc/util/XercesDefs.hpp>
 #include <boost/utility/enable_if.hpp>
@@ -43,30 +42,6 @@ namespace james {
      *      Form: void parseNode(xercesc::DOMElement*)
      */
     class XMLObject {};
-
-    /**
-     * Base class for all exceptions thrown during marshalling and unmarshalling.
-     */
-    class Exception : public std::exception {
-        std::string msg;
-    public:
-        Exception(const std::string& msg) throw();
-        ~Exception() throw();
-
-        const char* what() const throw();
-    };
-
-    //thrown when a required element of a complex type is NULL
-    class MissingRequiredElementException : public Exception {
-    public:
-        MissingRequiredElementException(const std::string& msg) throw();
-    };
-
-    //thrown when a memory allocation failed
-    class OutOfMemoryException : public Exception {
-    public:
-        OutOfMemoryException(const std::string& msg) throw();
-    };
 
     /**
      * Internal utility function for marshalling XMLObjects.

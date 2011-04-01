@@ -7,7 +7,7 @@
 
 #include <memory.h>
 #include "HexBinary.h"
-#include "XMLObject.h"
+#include "Exceptions.h"
 
 using namespace james;
 
