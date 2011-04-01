@@ -10,6 +10,16 @@
 
 #include "Exceptions.h"
 
+#ifdef __GNUC__
+#if (__GNUC__ > 3 || __GNUC__ == 3 && __GNUC_MINOR__ >= 1)
+#define james_attribute_deprecated __attribute__((deprecated))
+#else
+#define james_attribute_deprecated
+#endif
+#else
+#define james_attribute_deprecated
+#endif
+
 namespace james {
     /**
      * Like boost::optional, except with pointer storage.
@@ -59,7 +69,10 @@ namespace james {
                 delete t;
         }
 
-        operator bool () const {
+        /**
+         * @deprecated Use optional::isSet() instead
+         */
+        james_attribute_deprecated operator bool () const {
             return t;
         }
 
@@ -101,11 +114,17 @@ namespace james {
             return *t;
         }
 
-        const T& operator * () const {
+        /**
+         * @deprecated Use optional::get() instead
+         */
+        james_attribute_deprecated const T& operator * () const {
             return get();
         }
 
-        T& operator * () {
+        /**
+         * @deprecated Use optional::get() instead
+         */
+        james_attribute_deprecated T& operator * () {
             return get();
         }
     };
