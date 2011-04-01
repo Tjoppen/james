@@ -12,6 +12,7 @@ install(TARGETS libjames DESTINATION lib)
 install(FILES
     Exceptions.h
     HexBinary.h
+    version.h
     XercesString.h
     XMLDocument.h
     XMLObject.h
