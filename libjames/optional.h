@@ -115,6 +115,31 @@ namespace james {
         }
 
         /**
+         * Like james::optional::get() except it takes a default value that is
+         * returned if !isSet().
+         * This is useful for avoiding overly long lines like:
+         * 
+         *  fooValue = fooElement.isSet() ? fooElement.get() : defaultValue;
+         * 
+         * Intead this function can be used like this:
+         * 
+         *  fooValue = fooElement.getOrDefault(defaultValue);
+         */
+        const T& getOrDefault(const T& defaultValue) const {
+            if(!isSet())
+                return defaultValue;
+            else
+                return *t;
+        }
+
+        T& getOrDefault(T& defaultValue) {
+            if(!isSet())
+                return defaultValue;
+            else
+                return *t;
+        }
+
+        /**
          * @deprecated Use optional::get() instead
          */
         james_attribute_deprecated const T& operator * () const {
