@@ -283,6 +283,10 @@ string Class::getBaseHeader() const {
     return "\"" + base->getClassname() + ".h\"";
 }
 
+bool Class::hasHeader() const {
+    return true;
+}
+
 void Class::writeImplementation(ostream& os) const {
     ClassName className = name.second;
 
@@ -407,7 +411,7 @@ void Class::writeHeader(ostream& os) const {
     if(isSimple()) {
         os << "typedef " << base->getClassname() << " " << name.second << ";" << endl;
     } else {
-        if(base)
+        if(base && base->hasHeader())
             os << "#include " << getBaseHeader() << endl;
         
         if(!base || base->isSimple())

@@ -154,6 +154,12 @@ public:
     virtual std::string getBaseHeader() const;
 
     /**
+     * Returns whether this type has a header when it is the base of another class.
+     * Examples include normal complex types and certain built-in types like std::string.
+     */
+    virtual bool hasHeader() const;
+
+    /**
      * Returns whether the constructor should take const references to this class or not.
      * Counter cases include xs:int, xs:byte etc.
      */

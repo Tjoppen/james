@@ -32,9 +32,13 @@ public:\
     name(std::string xslOverride) : BuiltInClass(xslOverride) {}\
     std::string getClassname() const {return classname;}
 
-//same as GENERATE_BUILTIN, except shouldUseConstReferences() is made to return false
+//for types that lack/don't need a header, like int, float etc.
+#define HEADERLESS bool hasHeader() const { return false; }
+
+//same as GENERATE_BUILTIN, except header-less and shouldUseConstReferences() is made to return false
 #define GENERATE_BUILTIN_NONCONST(name, xslName, classname)\
 GENERATE_BUILTIN(name, xslName, classname)\
+    HEADERLESS\
     bool shouldUseConstReferences() const {return false;}
 
 #define GENERATE_BUILTIN_ALIAS(name, base, override)\
@@ -122,7 +126,7 @@ GENERATE_BUILTIN_NONCONST(BooleanClass, "boolean", "bool")
     }
 };
 
-GENERATE_BUILTIN(HexBinaryClass, "hexBinary", "james::HexBinary")};
+GENERATE_BUILTIN(HexBinaryClass, "hexBinary", "james::HexBinary") HEADERLESS};
 
 //aliases
 GENERATE_BUILTIN_ALIAS(IntegerClass, IntClass, "integer")};
