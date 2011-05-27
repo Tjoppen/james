@@ -152,6 +152,10 @@ namespace james {
         james_attribute_deprecated T& operator * () {
             return get();
         }
+
+        void clear() {
+            assign(NULL);
+        }
     };
 }
 
