@@ -358,14 +358,6 @@ void Class::writeImplementation(ostream& os) const {
     os << "void " << className << "::parseNode(xercesc::DOMElement *" << nodeWithPostfix << ") {" << endl;
     os << generateParser() << endl;
     os << "}" << endl << endl;
-
-    //clone()
-    os << className << " " << className << "::clone() const {" << endl;
-    os << "\tstringstream " << ssWithPostfix <<";" << endl;
-    os << "\t" << ssWithPostfix << " << *this;" << endl;
-    os << "\treturn " << className << "(" << ssWithPostfix << ");" << endl;
-    os << "}" << endl;
-    os << endl;
 }
 
 set<string> Class::getIncludedClasses() const {
@@ -476,9 +468,6 @@ void Class::writeHeader(ostream& os) const {
         
         os << "\tvoid appendChildren(xercesc::DOMElement *node) const;" << endl;
         os << "\tvoid parseNode(xercesc::DOMElement *node);" << endl;
-
-        //clone()
-        os << "\t" << className << " clone() const;" << endl;
         os << endl;
 
         //simpleContent
