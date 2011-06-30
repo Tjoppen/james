@@ -164,7 +164,11 @@ istream& james::unmarshal(istream& is, XMLObject& obj, void (XMLObject::*parseNo
     XercesDOMParser parser;
 
     parser.setDoNamespaces(true);
-    parser.parse(IStreamInputSource(is));
+
+    {
+        IStreamInputSource iis(is);
+        parser.parse(iis);
+    }
 
     DOMDocument     *document = parser.getDocument();
 
