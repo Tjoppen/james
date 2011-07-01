@@ -33,13 +33,14 @@ using namespace xercesc;
 using namespace james;
 
 static void printUsage() {
-    cerr << "USAGE: james [-v] [-d] [-nr] [-nv] [-a] [-cmake targetname] output-dir list-of-XSL-documents" << endl;
+    cerr << "USAGE: james [-v] [-d] [-nr] [-nv] [-a] [-cmake targetname] [--dry-run] output-dir list-of-XSL-documents" << endl;
     cerr << " -v\tVerbose mode" << endl;
     cerr << " -d\tGenerate default constructors" << endl;
     cerr << " -nr\tDon't generate constructors taking required elements" << endl;
     cerr << " -nv\tDon't generate constructors taking required elements and vectors" << endl;
     cerr << " -a\tGenerate constructors taking all elements" << endl;
     cerr << " -cmake\tGenerate CMakeLists.txt with all generated .cpp files as part of a library with the specified target name" << endl;
+    cerr << " --dry-run\tPerform generation but don't write anything to disk - instead does exit(1) if any file changes" << endl;
     cerr << endl;
     cerr << " Generates C++ classes for marshalling and unmarshalling XML to C++ objects according to the given schemas." << endl;
     cerr << " Files are output in the specified output directory and are named type.h and type.cpp" << endl;
@@ -572,13 +573,15 @@ static string readIstreamToString(istream& is) {
     return oss.str();
 }
 
+static bool files_changed = false;
+
 /**
  * Replaces contents of the file named by originalName with newContents if there is a difference.
  * If not, the file is untouched.
  * The purpose of this is to avoid the original file being marked as changed,
  * so that this tool can be incorporated into an automatic build system where only the files that did change have to be recompiled.
  */
-static void diffAndReplace(string fileName, string newContents) {
+static void diffAndReplace(string fileName, string newContents, bool dry_run) {
     //read contents of the original file. missing files give rise to empty strings
     string originalContents;
 
@@ -607,6 +610,11 @@ static void diffAndReplace(string fileName, string newContents) {
             cerr << "M " << fileName << endl;
         }
 
+        files_changed = true;
+
+        if(dry_run)
+            return;
+
         //write new content
         ofstream ofs(fileName.c_str());
         
@@ -631,6 +639,8 @@ string generateCMakeLists() {
 
 int main(int argc, char** argv) {
     try {
+        bool dry_run = false;
+
         if(argc <= 2) {
             printUsage();
             return 1;
@@ -668,6 +678,11 @@ int main(int argc, char** argv) {
 
                 argv++;
                 argc--;
+
+                continue;
+            } else if(!strcmp(argv[1], "--dry-run")) {
+                dry_run = true;
+                if(verbose) cerr << "Peforming dry run" << endl;
 
                 continue;
             }
@@ -737,7 +752,7 @@ int main(int argc, char** argv) {
                     //write implementation to memory, then diff against the possibly existing file
                     it->second->writeImplementation(implementation);
 
-                    diffAndReplace(name.str(), implementation.str());
+                    diffAndReplace(name.str(), implementation.str(), dry_run);
                 }
 
                 {
@@ -747,7 +762,7 @@ int main(int argc, char** argv) {
                     //write header to memory, then diff against the possibly existing file
                     it->second->writeHeader(header);
 
-                    diffAndReplace(name.str(), header.str());
+                    diffAndReplace(name.str(), header.str(), dry_run);
                 }
             }
         }
@@ -756,10 +771,18 @@ int main(int argc, char** argv) {
             ostringstream name;
             name << outputDir << "/CMakeLists.txt";
 
-            diffAndReplace(name.str(), generateCMakeLists());
+            diffAndReplace(name.str(), generateCMakeLists(), dry_run);
         }
 
         XMLPlatformUtils::Terminate();
+
+        if(dry_run) {
+            if(files_changed) {
+                if(verbose) cerr << "Changes detected" << endl;
+                return 1;
+            } else
+                if(verbose) cerr << "No changes detected" << endl;
+        }
 
         return 0;
     } catch(const std::exception& e) {
