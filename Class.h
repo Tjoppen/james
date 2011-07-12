@@ -80,6 +80,9 @@ private:
 
     void addConstructor(const Constructor& constructor);
 
+    //classes that we should friend so they can access our default constructor
+    std::set<std::string> friends;
+
 public:
     enum ClassType {
         SIMPLE_TYPE,

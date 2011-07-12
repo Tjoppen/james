@@ -66,6 +66,13 @@ void Class::doPostResolveInit() {
 
     if(constructors.size() == 0)
         throw runtime_error("No constructors in class " + getClassname());
+
+    //make sure members classes add us as their friend
+    for(std::list<Member>::iterator it = members.begin(); it != members.end(); it++) {
+        //there's no need to befriend ourselves
+        if(it->cl != this)
+            it->cl->friends.insert(getClassname());
+    }
 }
 
 std::list<Class::Member>::iterator Class::findMember(std::string name) {
@@ -450,6 +457,14 @@ void Class::writeHeader(ostream& os) const {
             os << "protected:" << endl;
             os << "\t" << className << "();" << endl;
             os << endl;
+
+            if(friends.size()) {
+                //add friends
+                for(set<string>::const_iterator it = friends.begin(); it != friends.end(); it++)
+                    os << "\tfriend class " << *it << ";" << endl;
+
+                os << endl;
+            }
         }
 
         os << "public:" << endl;
