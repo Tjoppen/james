@@ -1,0 +1,220 @@
+james - A simple XML schema compiler for C++, written in C++
+
+Purpose/goals
+=============
+
+The purpose of this program is to transform a subset of XSL into C++ code for marshalling and unmarshalling documents conforming to one or more schemas.
+The generated code should not be needlessly complicated (no getters or setters).
+The number of dependencies should be kept to a minimum.
+
+Compilation
+===========
+
+james makes use of CMake.
+This allows project files and Makefiles to be generated for a variety of system without having to maintain said files.
+The program is known to compile in *NIX like system (GNU/Linux, Mac OS X) via Makefiles and Windows via Visual Studio 2008.
+
+Dependencies
+------------
+
+james depends on Xerces-C++ 2.8.x or 3.1.x and Boost 1.32.0 or later (boost::shared_ptr).
+
+Building
+--------
+
+The program is built like a typical CMake project.
+A normal build and install will look something like this (output omitted):
+
+ ~/james$ mkdir build
+ ~/james$ cd build
+ ~/james/build$ cmake ..
+ ~/james/build$ make
+ ~/james/build$ sudo make install
+
+Note that this also installs libjames, which is required by the generated code.
+This requirement may disappear in the future, at which time the only install will be the program.
+
+A short guide to usage
+======================
+
+Running the program without arguments produces the following usage information:
+
+ USAGE: james [-v] [-d] [-nr] [-nv] [-a] [-cmake targetname] [--dry-run] output-dir list-of-XSL-documents
+  -v         Verbose mode
+  -d         Generate default constructors
+  -nr        Don't generate constructors taking required elements
+  -nv        Don't generate constructors taking required elements and vectors
+  -a         Generate constructors taking all elements
+  -cmake     Generate CMakeLists.txt with all generated .cpp files as part of a library with the specified target name
+  --dry-run  Perform generation but don't write anything to disk - instead does exit(1) if any file changes
+
+By default james generates at most two constructors for the generated classes.
+The first constructor takes all required elements. The intent is to not allow the user to forget setting required elements.
+The second constructor includes all vector element in addition to the required elements. This is meant more as a convenience.
+No default constructors are generated, except for types lacking members - for those there is only one constructor, which is the default cosntructor.
+The -d switch is used to tell james to generate defalult constructors for all classes.
+The -a switch also adds constructors taking optional elements. It is not very useful though, hence why they're disabled by default.
+
+The -cmake switch is used to generate a CMakeLists.txt file along with the .h and .cpp files.
+This CMake file turns the loose collection of files into a static library, suitable for inclusion in a CMake project via add_subdirectory().
+
+Finally, the --dry-run switch can be used to test whether running james would change any files on disk.
+This includes modifying existing files or creating new ones, but not no longer generating files for types that no longer exist.
+The latter is however detected if --dry-run is used together with the -cmake switch, since removing a type would change CMakeLists.txt.
+
+Non-CMake build example
+-----------------------
+
+For a small project with a single schema, generating and compiling a library for handling said schema looks like this:
+
+ ~/foo$ mkdir generated
+ ~/foo$ james generated schema.xsd
+
+Then make sure generated/*.cpp is somehow included in your build, and possibly that generated/ is part of your include path.
+Your program also needs to link with libjames, since the generated code currently depends on it.
+Note that outputing the files in the current directory is not recommended since that makes cleaning up difficult.
+
+CMake build example
+-------------------
+
+If foo is a CMake project, then schema.xsd can be turned into a library.
+This library, called libbar in this example, can be put in a subdirectory and add_subdirectory():ed once generated.
+CMake does not yet seem able to depend on generated subdirectories, so libbar would have to be generated prior to running CMake for foo.
+In other words, something like this:
+
+ ~/foo$ cat CMakeLists.txt
+ ...
+ add_subdirectory(libbar)
+ add_executable(foo main.cpp [...])
+ target_link_libraries(foo bar libjames)
+ ...
+ ~/foo$ mkdir libbar
+ ~/foo$ james -cmake bar libbar/ schema.xsd
+ ~/foo$ mkdir build
+ ~/foo$ cd build
+ ~/foo/build$ cmake ..
+ ~/foo/build$ make
+
+After this ~/foo/build contains the binary foo, and ~/foo/build/libbar contains libbar.a.
+A better solution would be to somehow have add_subdirectory() depend on a custom target that runs james and generated ~/bar/libfoo.
+It is possible to hack something similar to this using the CMake module ExternalProject.
+
+Using the generated code
+========================
+
+Here is a small example schema and code that makes use of the generated classes:
+
+example.xsd
+-----------
+
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="http://example.com/" elementFormDefault="qualified" xmlns="http://example.com/">
+  <xs:element name="PersonDocument" type="tns:PersonType"/>
+  <xs:element name="PersonListDocument">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="person" type="tns:PersonType" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="PersonType">
+    <xs:attribute name="name"      type="xs:string" use="required"/>
+    <xs:attribute name="address"   type="xs:string" use="required"/>
+    <xs:attribute name="birthYear" type="xs:int"    use="required"/>
+  </xs:complexType>
+</xs:schema>
+
+person.xml
+----------
+<?xml version="1.0" encoding="UTF-8"?>
+<PersonDocument name="Foo Oldperson" address="Bar Street 123" birthYear="1900"/>
+
+example.cpp
+-----------
+
+#include <iostream>
+#include <xercesc/util/PlatformUtils.hpp>
+#include "generated/PersonDocument.h"
+#include "generated/PersonListDocument.h"
+
+int main() {
+    //initialize Xerces-C++
+    xercesc::XMLPlatformUtils::Initialize();
+
+    //unmarshal personIn from stdin
+    PersonDocument personIn(std::cin);
+
+    //create a list containing personIn and some other person
+    PersonListDocument list;
+    list.person.push_back(personIn);
+    list.person.push_back(PersonType("Some Otherguy", "Somewhere 999", 1985));
+
+    //finally, marshal the list to stdout
+    std::cout << list;
+
+    //terminate Xerces-C++
+    xercesc::XMLPlatformUtils::Terminate();
+
+    return 0;
+}
+
+Compiling
+---------
+
+~/example$ mkdir generated
+~/example$ james generated example.xsd
+A generated/PersonDocument.cpp
+A generated/PersonDocument.h
+A generated/PersonListDocument.cpp
+A generated/PersonListDocument.h
+A generated/PersonListDocumentType.cpp
+A generated/PersonListDocumentType.h
+A generated/PersonType.cpp
+A generated/PersonType.h
+~/example$ g++ example.cpp generated/*.cpp -ljames -lxerces-c -o example
+
+Running
+-------
+
+$ ./example < person.xml | xmllint --format -
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<PersonListDocument xmlns="http://example.com/">
+  <person address="Bar Street 123" birthYear="1900" name="Foo Oldperson"/>
+  <person address="Somewhere 999" birthYear="1985" name="Some Otherguy"/>
+</PersonListDocument>
+
+Limitations
+===========
+
+Some schemas, like that of XHTML or XSL itself, will never be supported by james.
+The intent is to only support schemas that can be compiled into classes that consist of plain C++ objects.
+Any schema that allows arbitrary order of elements in any type is explicitly not supported.
+
+Motivation
+==========
+
+This program came about as an alternative to using xmlbeansxx in a project I was working on.
+Using xmlbeansxx eventually became intolerable enough that it was easier to write a new tool than deal with its problems.
+James is an attempt to address these problems, which at the time (possibly to this day) included;
+
+* Complicated build system
+ - Requires the Java SDK, Maven and Ant
+ - Lacks of out-of-source build
+* All code being put into a pair of giant .h/.cpp files (~1 MLOC each for a typical schema)
+* scompxx always touching said file pair, regardless of whether their content would change or not
+ - This leads difficulties using scompxx in a pre-build script
+* Converting namespace URIs into a complicated structure of namespaces, similar to Java packages
+ - The generated classes are put in said namespace, making for needlessly verbose code
+* Didn't compile in Visual Studio
+* Barely compiled in Cygwin (after patching)
+* Producing very Java-like classes, like using getters, setters and factories without good reason
+
+TODO
+====
+
+* Support more XSL features (within reason)
+* Remove dependency on Boost
+* Make switching between Xerces-C++ 2.8.x and 3.1.x easier
+* Create output directory if it doesn't exist
+* Some way of specifying one or namespaces into which the generated classes can be put
+* Put libjames/* among generated output, removing the need to install or link with it
