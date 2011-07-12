@@ -67,6 +67,11 @@ private:
          */
         bool hasSameSignature(const Constructor& other) const;
 
+        /**
+         * Returns true if this is a default constructor (meaning it takes no arguments).
+         */
+        bool isDefaultConstructor() const;
+
         void writePrototype(std::ostream &os, bool withSemicolon) const;
         void writeBody(std::ostream &os) const;
     };
@@ -164,6 +169,11 @@ public:
      * Counter cases include xs:int, xs:byte etc.
      */
     virtual bool shouldUseConstReferences() const;
+
+    /**
+     * Returns true if we need to add a protected default constructor.
+     */
+    bool needsProtectedDefaultConstructor() const;
 
     std::set<std::string> getIncludedClasses() const;
     std::set<std::string> getPrototypeClasses() const;

@@ -307,6 +307,14 @@ void Class::writeImplementation(ostream& os) const {
     os << "using namespace james;" << endl;
     os << endl;
 
+    if (needsProtectedDefaultConstructor()) {
+        if(base && !base->isSimple())
+            os << className << "::" << className << "() : " << base->getClassname() << "() {}" << endl;
+        else
+            os << className << "::" << className << "() {}" << endl;
+        os << endl;
+    }
+
     //constructors
     for(list<Constructor>::const_iterator it = constructors.begin(); it != constructors.end(); it++) {
         it->writeBody(os);
@@ -437,6 +445,13 @@ void Class::writeHeader(ostream& os) const {
             os << "class " << className << " : public james::XMLObject";
         
         os << " {" << endl;
+
+        if (needsProtectedDefaultConstructor()) {
+            os << "protected:" << endl;
+            os << "\t" << className << "();" << endl;
+            os << endl;
+        }
+
         os << "public:" << endl;
 
         //constructors
@@ -506,6 +521,14 @@ void Class::writeHeader(ostream& os) const {
 }
 
 bool Class::shouldUseConstReferences() const {
+    return true;
+}
+
+bool Class::needsProtectedDefaultConstructor() const {
+    for (std::list<Constructor>::const_iterator it = constructors.begin(); it != constructors.end(); it++)
+        if (it->isDefaultConstructor())
+            return false;
+
     return true;
 }
 
@@ -580,6 +603,10 @@ bool Class::Constructor::hasSameSignature(const Constructor& other) const {
             return false;
 
     return true;
+}
+
+bool Class::Constructor::isDefaultConstructor() const {
+    return baseArgs.size() + ourArgs.size() == 0;
 }
 
 void Class::Constructor::writePrototype(ostream &os, bool withSemicolon) const {
