@@ -1,3 +1,4 @@
+// This file is in the public domain.
 #ifndef EXCEPTIONS_H
 #define EXCEPTIONS_H
 

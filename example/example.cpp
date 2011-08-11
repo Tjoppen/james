@@ -1,3 +1,4 @@
+// This file is in the public domain.
 #include <iostream>
 #include <xercesc/util/PlatformUtils.hpp>
 #include "generated/PersonDocument.h"

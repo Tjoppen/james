@@ -1,3 +1,4 @@
+# This file is in the public domain.
 add_library(libjames
     Exceptions.cpp
     HexBinary.cpp

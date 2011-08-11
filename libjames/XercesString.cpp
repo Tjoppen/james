@@ -1,4 +1,5 @@
-/* 
+/* This file is in the public domain.
+ * 
  * File:   XercesString.cpp
  * Author: tjoppen
  * 

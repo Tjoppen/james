@@ -1,3 +1,4 @@
+// This file is in the public domain.
 #ifndef LIBJAMES_VERSION_H
 #define LIBJAMES_VERSION_H
 
