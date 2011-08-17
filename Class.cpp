@@ -540,7 +540,7 @@ void Class::writeHeader(ostream& os) const {
                 os << "std::vector<";
 
             if (it->cl)
-            os << it->cl->getClassname();
+                os << it->cl->getClassname();
             else
                 os << it->type.second;
 

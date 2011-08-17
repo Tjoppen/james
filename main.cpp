@@ -511,7 +511,7 @@ static void resolveMemberRefs(map<FullName, shared_ptr<Class> >& classMap) {
 
                 it2->cl = NULL;
             } else
-            it2->cl = classes[it2->type].get();
+                it2->cl = classes[it2->type].get();
         }
     }
 }
