@@ -47,7 +47,7 @@ public:
     public:
         std::string name;
         FullName type;
-        Class *cl;
+        Class *cl;          //NULL is class is unknown (only allowed for optionals and vectors)
         int minOccurs;
         int maxOccurs;
         bool isAttribute;   //true if this member is an attribute rather than an element

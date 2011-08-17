@@ -500,9 +500,17 @@ static void parseElement(DOMElement *element, string tns) {
 static void resolveMemberRefs(map<FullName, shared_ptr<Class> >& classMap) {
     for(map<FullName, shared_ptr<Class> >::iterator it = classMap.begin(); it != classMap.end(); it++) {
         for(list<Class::Member>::iterator it2 = it->second->members.begin(); it2 != it->second->members.end(); it2++) {
-            if(classes.find(it2->type) == classes.end())
-                throw runtime_error("Undefined type " + it2->type.first + ":" + it2->type.second + " in member " + it2->name + " of " + it->first.first + ":" + it->first.second);
+            if(classes.find(it2->type) == classes.end()) {
+                if (it2->minOccurs > 0)
+                    throw runtime_error("Undefined type " + it2->type.first + ":" + it2->type.second + " in required member " + it2->name + " of " + it->first.first + ":" + it->first.second);
 
+                //allow members with undefined types as long as they're optional or vectors
+                if (verbose)
+                    cerr << "Optional/vector member " << it2->name << " of " << it->first.first << ":" << it->first.second <<
+                            " is of unknown type " << it2->type.first << ":" << it2->type.second << endl << " - ignoring" << endl;
+
+                it2->cl = NULL;
+            } else
             it2->cl = classes[it2->type].get();
         }
     }

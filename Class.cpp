@@ -83,7 +83,7 @@ void Class::doPostResolveInit() {
     //make sure members classes add us as their friend
     for(std::list<Member>::iterator it = members.begin(); it != members.end(); it++) {
         //there's no need to befriend ourselves
-        if(it->cl != this)
+        if(it->cl && it->cl != this)
             it->cl->friends.insert(getClassname());
     }
 }
@@ -132,6 +132,9 @@ string Class::generateAppender() const {
     }
     
     for(std::list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
+        if (!it->cl)
+            continue;
+
         string name = it->name;
         string setterName = it->name;
         string nodeName = name + "Node";
@@ -213,6 +216,9 @@ string Class::generateParser() const {
     bool first = true;
 
     for(std::list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
+        if (!it->cl)
+            continue;
+
         if(!it->isAttribute) {
             if(first)
                 first = false;
@@ -245,6 +251,9 @@ string Class::generateParser() const {
 
     //attributes
     for(std::list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
+        if (!it->cl)
+            continue;
+
         if(it->isAttribute) {
             string attributeNodeName = "attributeNode" + variablePostfix;
 
@@ -393,7 +402,7 @@ set<string> Class::getIncludedClasses() const {
 
     //return classes of any simple non-builtin elements and any required non-simple elements
     for(list<Member>::const_iterator it = members.begin(); it != members.end(); it++)
-        if((!it->cl->isBuiltIn() && it->cl->isSimple()) || (it->isRequired() && !it->cl->isSimple()))
+        if (it->cl && ((!it->cl->isBuiltIn() && it->cl->isSimple()) || (it->isRequired() && !it->cl->isSimple())))
             classesToInclude.insert(it->cl->getClassname());
 
     return classesToInclude;
@@ -405,7 +414,7 @@ set<string> Class::getPrototypeClasses() const {
 
     //return the classes of any non-simple non-required elements
     for(list<Member>::const_iterator it = members.begin(); it != members.end(); it++)
-        if(classesToInclude.find(it->cl->getClassname()) == classesToInclude.end() && !it->cl->isSimple() && !it->isRequired())
+        if(it->cl && classesToInclude.find(it->cl->getClassname()) == classesToInclude.end() && !it->cl->isSimple() && !it->isRequired())
             classesToPrototype.insert(it->cl->getClassname());
 
     return classesToPrototype;
@@ -521,17 +530,29 @@ void Class::writeHeader(ostream& os) const {
         for(list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
             os << "\t";
 
+            //elements of unknown types are shown commented out
+            if (!it->cl)
+                os << "//";
+
             if(it->isOptional())
                 os << "james::optional<";
             else if(it->isArray())
                 os << "std::vector<";
 
+            if (it->cl)
             os << it->cl->getClassname();
+            else
+                os << it->type.second;
 
             if(it->isOptional() || it->isArray())
                 os << " >";
 
-            os << " " << it->name << ";" << endl;
+            os << " " << it->name << ";";
+
+            if (!it->cl)
+                os << "\t//" << it->type.first << ":" << it->type.second << " is undefined";
+
+            os << endl;
         }
 
         os << "};" << endl;
@@ -627,7 +648,7 @@ bool Class::Constructor::hasSameSignature(const Constructor& other) const {
     //return false if the arguments in any position are of different types or
     //if one is an array but the other isn't
     for(; ita != a.end(); ita++, itb++)
-        if(ita->cl->getClassname() != itb->cl->getClassname() || ita->isArray() != itb->isArray())
+        if(ita->cl && (ita->cl->getClassname() != itb->cl->getClassname() || ita->isArray() != itb->isArray()))
             return false;
 
     return true;
@@ -643,6 +664,9 @@ void Class::Constructor::writePrototype(ostream &os, bool withSemicolon) const {
     os << cl->getClassname() << "(";
 
     for(list<Member>::const_iterator it = all.begin(); it != all.end(); it++) {
+        if (!it->cl)
+            continue;
+
         if(it != all.begin())
             os << ", ";
 
