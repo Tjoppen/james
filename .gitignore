@@ -2,3 +2,5 @@ dist
 build
 testdata
 nbproject/private
+*~
+
