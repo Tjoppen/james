@@ -706,9 +706,15 @@ void Class::Constructor::writeBody(ostream &os) const {
     if(cl->base && !cl->base->isSimple()) {
         //pass the base class' elements
         os << cl->base->getClassname() << "(";
+        bool first = true;
 
         for(list<Member>::const_iterator it = baseArgs.begin(); it != baseArgs.end(); it++) {
-            if(it != baseArgs.begin())
+            if (!it->cl)
+                continue;
+
+            if (first)
+                first = false;
+            else
                 os << ", ";
 
             os << it->name;
@@ -718,8 +724,15 @@ void Class::Constructor::writeBody(ostream &os) const {
         hasParens = true;
     }
 
+    bool first = true;
+
     for(list<Member>::const_iterator it = ourArgs.begin(); it != ourArgs.end(); it++) {
-        if(hasParens || it != ourArgs.begin())
+        if (!it->cl)
+            continue;
+
+        if (first && !hasParens)
+            first = false;
+        else if(hasParens || !first)
             os << ", ";
 
         os << it->name << "(" << it->name << ")";
