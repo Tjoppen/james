@@ -74,11 +74,11 @@ namespace james {
          * @deprecated Use optional::isSet() instead
          */
         james_attribute_deprecated operator bool () const {
-            return t;
+            return t != NULL;
         }
 
         bool isSet() const {
-            return t;
+            return t != NULL;
         }
 
         optional& operator = (const T& rhs) {
