@@ -419,7 +419,7 @@ static void parseComplexType(DOMElement *element, FullName fullName, shared_ptr<
             info.maxOccurs = 1;
 
             cl->addMember(info);
-		} else if(name == "attributeGroup") {
+        } else if(name == "attributeGroup") {
             if(!child->hasAttribute(XercesString("ref")))
                 throw runtime_error("<attributeGroup> missing expected attribute 'ref'");
 

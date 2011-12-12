@@ -7,7 +7,7 @@
  */
 
 #ifndef _XMLOBJECT_H
-#define	_XMLOBJECT_H
+#define _XMLOBJECT_H
 
 #include <string>
 #include <xercesc/util/XercesDefs.hpp>
@@ -77,5 +77,5 @@ template<typename T>
     return james::unmarshal(is, obj, static_cast<void (james::XMLObject::*)(xercesc::DOMElement*)>(&T::parseNode), obj.getName());
 }
 
-#endif	/* _XMLOBJECT_H */
+#endif /* _XMLOBJECT_H */
 

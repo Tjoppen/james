@@ -19,10 +19,10 @@
  */
 
 #ifndef _MAIN_H
-#define	_MAIN_H
+#define _MAIN_H
 
 #define CHECK(a) if(!a) throw runtime_error(#a " == NULL")
 #define XSL "http://www.w3.org/2001/XMLSchema"
 
-#endif	/* _MAIN_H */
+#endif /* _MAIN_H */
 

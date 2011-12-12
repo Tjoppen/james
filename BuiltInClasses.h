@@ -19,7 +19,7 @@
  */
 
 #ifndef _BUILTINCLASSES_H
-#define	_BUILTINCLASSES_H
+#define _BUILTINCLASSES_H
 
 #include "Class.h"
 
@@ -149,5 +149,5 @@ GENERATE_BUILTIN_ALIAS(DateClass, StringClass, "date")};
 GENERATE_BUILTIN_ALIAS(DateTimeClass, StringClass, "dateTime")};
 GENERATE_BUILTIN_ALIAS(LanguageClass, StringClass, "language")};
 
-#endif	/* _BUILTINCLASSES_H */
+#endif /* _BUILTINCLASSES_H */
 

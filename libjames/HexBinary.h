@@ -7,7 +7,7 @@
  */
 
 #ifndef _HEXBINARY_H
-#define	_HEXBINARY_H
+#define _HEXBINARY_H
 
 #include <string>
 #include <sstream>
@@ -49,5 +49,5 @@ std::ostream& operator<< (std::ostream& os, const james::HexBinary& hex);
  */
 std::istream& operator>> (std::istream& is, james::HexBinary& hex);
 
-#endif	/* _HEXBINARY_H */
+#endif /* _HEXBINARY_H */
 

@@ -7,7 +7,7 @@
  */
 
 #ifndef _OPTIONAL_H
-#define	_OPTIONAL_H
+#define _OPTIONAL_H
 
 #include "Exceptions.h"
 
@@ -160,5 +160,5 @@ namespace james {
     };
 }
 
-#endif	/* _OPTIONAL_H */
+#endif /* _OPTIONAL_H */
 

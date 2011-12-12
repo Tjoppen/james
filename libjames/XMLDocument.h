@@ -7,7 +7,7 @@
  */
 
 #ifndef _XMLDOCUMENT_H
-#define	_XMLDOCUMENT_H
+#define _XMLDOCUMENT_H
 
 namespace james {
     /**
@@ -19,5 +19,5 @@ namespace james {
     class XMLDocument {};
 }
 
-#endif	/* _XMLDOCUMENT_H */
+#endif /* _XMLDOCUMENT_H */
 

@@ -7,7 +7,7 @@
  */
 
 #ifndef _XERCESSTRING_H
-#define	_XERCESSTRING_H
+#define _XERCESSTRING_H
 
 #include <xercesc/util/XercesDefs.hpp>
 #include <string>
@@ -34,5 +34,5 @@ namespace james {
 std::ostream& operator<< (std::ostream& os, const james::XercesString& str);
 std::ostream& operator<< (std::ostream& os, const XMLCh* str);
 
-#endif	/* _XERCESSTRING_H */
+#endif /* _XERCESSTRING_H */
 
