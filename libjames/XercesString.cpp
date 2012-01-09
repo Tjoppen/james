@@ -8,24 +8,17 @@
 
 #include "XercesString.h"
 #include <xercesc/util/XMLString.hpp>
-#include <boost/shared_ptr.hpp>
 
 using namespace xercesc;
-using namespace boost;
 using namespace std;
 using namespace james;
 
-class XMLChDeleter {
-public:
-    void operator() (XMLCh *str) {
-        XMLString::release(&str);
-    }
-};
-
 XercesString::XercesString(const string& str) {
-    shared_ptr<XMLCh> xstr(XMLString::transcode(str.c_str()), XMLChDeleter());
+    XMLCh *xstr = XMLString::transcode(str.c_str());
 
-    *this = xstr.get();
+    *this = xstr;
+
+    XMLString::release(&xstr);
 }
 
 XercesString::XercesString(const XMLCh *str) : basic_string<XMLCh>(str) {
