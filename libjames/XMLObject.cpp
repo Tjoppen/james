@@ -10,8 +10,6 @@
 #include "XercesString.h"
 #include <iostream>
 #include <stdexcept>
-#include <boost/shared_ptr.hpp>
-#include <boost/scoped_ptr.hpp>
 #include <xercesc/dom/DOMImplementationRegistry.hpp>
 #include <xercesc/dom/DOMImplementation.hpp>
 #include <xercesc/dom/DOMImplementationLS.hpp>
@@ -98,11 +96,31 @@ public:
     }
 };
 
-//Generic deleter that calls T::release(). Works for a lot of classes in Xerces-C++
+//Used to call T::release() for Xerces-C++ classes when they fall out of scope, without having to rely on Boost
 template<class T> class Releaser {
+    //no default ctor, noncopyable
+    Releaser();
+    Releaser(const Releaser&);
+    const Releaser& operator= (const Releaser&);
+
+    T *t;
 public:
-    void operator () (T *t) {
+    Releaser(T *t) : t(t) {}
+
+    ~Releaser() {
         t->release();
+    }
+
+    bool operator! () const {
+        return !t;
+    }
+
+    T* operator-> () const {
+        return t;
+    }
+
+    T* get() const {
+        return t;
     }
 };
 
@@ -114,25 +132,25 @@ ostream& james::marshal(ostream& os, const XMLObject& obj, void (XMLObject::*app
     if(!implementation)     throw runtime_error("Failed to find a DOM implementation");
     if(!lsImplementation)   throw runtime_error("Failed to find a DOM LS implementation");
 
-    //shared_ptr + deleter -> exception safety
+    //Releaser -> exception safety
 #ifdef USE_XERCES_C_28
-    boost::shared_ptr<DOMWriter> writer(lsImplementation->createDOMWriter(), Releaser<DOMWriter>());
+    Releaser<DOMWriter> writer(lsImplementation->createDOMWriter());
 
     if(!writer)             throw runtime_error("Failed to create DOM writer");
 #else
-    boost::shared_ptr<DOMLSSerializer> serializer(lsImplementation->createLSSerializer(), Releaser<DOMLSSerializer>());
+    Releaser<DOMLSSerializer> serializer(lsImplementation->createLSSerializer());
 
     if(!serializer)         throw runtime_error("Failed to create DOM LS serializer");
 
-    boost::shared_ptr<DOMLSOutput> output(lsImplementation->createLSOutput(), Releaser<DOMLSOutput>());
+    Releaser<DOMLSOutput> output(lsImplementation->createLSOutput());
 
     if(!output)             throw runtime_error("Failed to create DOM LS output");
 #endif
 
     //get name of root element and create new DOM dodument
-    //shared_ptr + deleter -> exception safety
+    //Releaser -> exception safety
     XercesString documentNameString(documentName);
-    boost::shared_ptr<DOMDocument> document(implementation->createDocument(0, documentNameString, 0), Releaser<DOMDocument>());
+    Releaser<DOMDocument> document(implementation->createDocument(0, documentNameString, 0));
 
     if(!document)           throw runtime_error("Failed to create DOM document");
 
@@ -147,13 +165,12 @@ ostream& james::marshal(ostream& os, const XMLObject& obj, void (XMLObject::*app
     (obj.*appendChildren)(root);
 
     //serialize directly to the ostream
-    //we only need a scoped_ptr here
-    boost::scoped_ptr<OstreamFormatTarget> target(new OstreamFormatTarget(os));
+    OstreamFormatTarget target(os);
 
 #ifdef USE_XERCES_C_28
-    writer->writeNode(target.get(), *document);
+    writer->writeNode(&target, *document.get());
 #else
-    output->setByteStream(target.get());
+    output->setByteStream(&target);
     serializer->write(document.get(), output.get());
 #endif
 
