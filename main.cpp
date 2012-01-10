@@ -25,7 +25,6 @@
 #include <stdexcept>
 #include <sstream>
 #include <fstream>
-#include <boost/shared_ptr.hpp>
 #include <xercesc/parsers/XercesDOMParser.hpp>
 #include <xercesc/util/PlatformUtils.hpp>
 #include <xercesc/dom/DOMDocument.hpp>
@@ -41,7 +40,6 @@
 #include "BuiltInClasses.h"
 
 using namespace std;
-using namespace boost;
 using namespace xercesc;
 using namespace james;
 
@@ -63,10 +61,10 @@ static void printUsage() {
 map<string, string> nsLUT;
 
 //collection of all generated classes
-map<FullName, shared_ptr<Class> > classes;
+map<FullName, Class*> classes;
 
 //fake classes which are appended to other classes. see Class::groups and xs::attributeGroup
-map<FullName, shared_ptr<Class> > groups;
+map<FullName, Class*> groups;
 
 bool verbose = false;
 bool generateDefaultCtor = false;
@@ -75,9 +73,12 @@ bool generateRequiredAndVectorsCtor = true;
 bool generateAllCtor = false;
 static std::string cmakeTargetName;
 
-static shared_ptr<Class> addClass(shared_ptr<Class> cl, map<FullName, shared_ptr<Class> >& to = classes) {
-    if(to.find(cl->name) != to.end())
-        throw runtime_error(cl->name.first + ":" + cl->name.second + " defined more than once");
+static Class* addClass(Class *cl, map<FullName, Class*>& to = classes) {
+    if(to.find(cl->name) != to.end()) {
+        FullName name = cl->name;
+        delete cl;
+        throw runtime_error(name.first + ":" + name.second + " defined more than once");
+    }
 
     return to[cl->name] = cl;
 }
@@ -259,9 +260,9 @@ static vector<DOMElement*> getChildElementsByTagName(DOMElement *parent, string 
     return ret;
 }
 
-static void parseComplexType(DOMElement *element, FullName fullName, shared_ptr<Class> cl = shared_ptr<Class>());
+static void parseComplexType(DOMElement *element, FullName fullName, Class *cl = NULL);
 
-static void parseSequence(DOMElement *parent, DOMElement *sequence, shared_ptr<Class> cl, bool choice = false) {
+static void parseSequence(DOMElement *parent, DOMElement *sequence, Class *cl, bool choice = false) {
     //we expect to see a whole bunch of <element>s here
     //if choice is true then this is a choice sequence - every element is optional
     CHECK(parent);
@@ -359,7 +360,7 @@ static void parseSequence(DOMElement *parent, DOMElement *sequence, shared_ptr<C
     }
 }
 
-static void parseComplexType(DOMElement *element, FullName fullName, shared_ptr<Class> cl) {
+static void parseComplexType(DOMElement *element, FullName fullName, Class *cl) {
     //we handle two cases with <complexType>:
     //child is <sequence>
     //child is <complexContent> - expect grandchild <extension>
@@ -367,7 +368,7 @@ static void parseComplexType(DOMElement *element, FullName fullName, shared_ptr<
 
     //bootstrap Class pointer in case we didn't come from the recursive <extension> call below
     if(!cl)
-        cl = addClass(shared_ptr<Class>(new Class(fullName, Class::COMPLEX_TYPE)));
+        cl = addClass(new Class(fullName, Class::COMPLEX_TYPE));
     
     vector<DOMElement*> childElements = getChildElements(element);
 
@@ -444,7 +445,7 @@ static void parseSimpleType(DOMElement *element, FullName fullName) {
     FullName baseName = toFullName(XercesString(restriction->getAttribute(XercesString("base"))));
 
     //add class and return
-    addClass(shared_ptr<Class>(new Class(fullName, Class::SIMPLE_TYPE, baseName)));
+    addClass(new Class(fullName, Class::SIMPLE_TYPE, baseName));
 }
 
 static void parseElement(DOMElement *element, string tns) {
@@ -481,7 +482,7 @@ static void parseElement(DOMElement *element, string tns) {
         } else
             type = toFullName(XercesString(element->getAttribute(XercesString("type"))), tns);
 
-        addClass(shared_ptr<Class>(new Class(fullName, Class::COMPLEX_TYPE, type)))->isDocument = true;
+        addClass(new Class(fullName, Class::COMPLEX_TYPE, type))->isDocument = true;
     } else if(nodeName == "simpleType") {
         parseSimpleType(element, fullName);
     } else if(nodeName == "attributeGroup") {
@@ -489,16 +490,22 @@ static void parseElement(DOMElement *element, string tns) {
         //we add the dummy Class group to ::groups rather than ::classes
         //this means it won't result in generated code
         //work() will copy the members of referenced groups to the referencing classes
-        shared_ptr<Class> group(new Class(fullName, Class::COMPLEX_TYPE));
+        Class *group = new Class(fullName, Class::COMPLEX_TYPE);
 
+        try {
         parseComplexType(element, fullName, group);
+        } catch(...) {
+            delete group;
+            throw;
+        }
+
         addClass(group, groups);
     }
 }
 
 //sets the Class::Member::cl pointer for each member in each class in classMap
-static void resolveMemberRefs(map<FullName, shared_ptr<Class> >& classMap) {
-    for(map<FullName, shared_ptr<Class> >::iterator it = classMap.begin(); it != classMap.end(); it++) {
+static void resolveMemberRefs(map<FullName, Class*>& classMap) {
+    for(map<FullName, Class*>::iterator it = classMap.begin(); it != classMap.end(); it++) {
         for(list<Class::Member>::iterator it2 = it->second->members.begin(); it2 != it->second->members.end(); it2++) {
             if(classes.find(it2->type) == classes.end()) {
                 if (it2->minOccurs > 0)
@@ -511,7 +518,7 @@ static void resolveMemberRefs(map<FullName, shared_ptr<Class> >& classMap) {
 
                 it2->cl = NULL;
             } else
-                it2->cl = classes[it2->type].get();
+                it2->cl = classes[it2->type];
         }
     }
 }
@@ -555,12 +562,12 @@ static void work(string outputDir, const vector<string>& schemaNames) {
     resolveMemberRefs(classes);
     resolveMemberRefs(groups);
 
-    for(map<FullName, shared_ptr<Class> >::iterator it = classes.begin(); it != classes.end(); it++) {
+    for(map<FullName, Class*>::iterator it = classes.begin(); it != classes.end(); it++) {
         if(it->second->hasBase()) {
             if(classes.find(it->second->baseType) == classes.end())
                 throw runtime_error("Undefined base type " + it->second->baseType.first + ":" + it->second->baseType.second + " of " + it->second->name.first + ":" + it->second->name.second);
 
-            it->second->base = classes[it->second->baseType].get();
+            it->second->base = classes[it->second->baseType];
         } else if(it->second->isDocument)
             throw runtime_error("Document without base type!");
 
@@ -579,7 +586,7 @@ static void work(string outputDir, const vector<string>& schemaNames) {
 void doPostResolveInits() {
     if(verbose) cerr << "Doing post-resolve work in preparation for writing headers and implementations." << endl;
 
-    for(map<FullName, shared_ptr<Class> >::iterator it = classes.begin(); it != classes.end(); it++)
+    for(map<FullName, Class*>::iterator it = classes.begin(); it != classes.end(); it++)
         it->second->doPostResolveInit();
 }
 
@@ -649,7 +656,7 @@ string generateCMakeLists() {
     oss << "cmake_minimum_required(VERSION 2.6)" << endl;
     oss << "add_library(" << cmakeTargetName << endl;
 
-    for(map<FullName, shared_ptr<Class> >::iterator it = classes.begin(); it != classes.end(); it++)
+    for(map<FullName, Class*>::iterator it = classes.begin(); it != classes.end(); it++)
         if(!it->second->isSimple())
             oss << "\t" << it->first.second << ".cpp" << endl;
 
@@ -658,7 +665,7 @@ string generateCMakeLists() {
     return oss.str();
 }
 
-int main(int argc, char** argv) {
+int main_wrapper(int argc, char** argv) {
     try {
         bool dry_run = false;
 
@@ -730,25 +737,25 @@ int main(int argc, char** argv) {
         nsLUT["xsl"] = XSL;
         nsLUT["xsd"] = XSL;
 
-        addClass(shared_ptr<Class>(new ByteClass));
-        addClass(shared_ptr<Class>(new UnsignedByteClass));
-        addClass(shared_ptr<Class>(new ShortClass));
-        addClass(shared_ptr<Class>(new UnsignedShortClass));
-        addClass(shared_ptr<Class>(new IntClass));
-        addClass(shared_ptr<Class>(new UnsignedIntClass));
-        addClass(shared_ptr<Class>(new IntegerClass));
-        addClass(shared_ptr<Class>(new LongClass));
-        addClass(shared_ptr<Class>(new UnsignedLongClass));
-        addClass(shared_ptr<Class>(new StringClass));
-        addClass(shared_ptr<Class>(new AnyURIClass));
-        addClass(shared_ptr<Class>(new FloatClass));
-        addClass(shared_ptr<Class>(new DoubleClass));
-        addClass(shared_ptr<Class>(new TimeClass));
-        addClass(shared_ptr<Class>(new DateClass));
-        addClass(shared_ptr<Class>(new DateTimeClass));
-        addClass(shared_ptr<Class>(new BooleanClass));
-        addClass(shared_ptr<Class>(new LanguageClass));
-        addClass(shared_ptr<Class>(new HexBinaryClass));
+        addClass(new ByteClass);
+        addClass(new UnsignedByteClass);
+        addClass(new ShortClass);
+        addClass(new UnsignedShortClass);
+        addClass(new IntClass);
+        addClass(new UnsignedIntClass);
+        addClass(new IntegerClass);
+        addClass(new LongClass);
+        addClass(new UnsignedLongClass);
+        addClass(new StringClass);
+        addClass(new AnyURIClass);
+        addClass(new FloatClass);
+        addClass(new DoubleClass);
+        addClass(new TimeClass);
+        addClass(new DateClass);
+        addClass(new DateTimeClass);
+        addClass(new BooleanClass);
+        addClass(new LanguageClass);
+        addClass(new HexBinaryClass);
 
         string outputDir = argv[1];
         vector<string> schemaNames;
@@ -763,7 +770,7 @@ int main(int argc, char** argv) {
         if(verbose) cerr << "Everything seems to be in order. Writing/updating headers and implementations as needed." << endl;
 
         //dump the appenders and parsers of all non-build-in classes
-        for(map<FullName, shared_ptr<Class> >::iterator it = classes.begin(); it != classes.end(); it++) {
+        for(map<FullName, Class*>::iterator it = classes.begin(); it != classes.end(); it++) {
             if(!it->second->isBuiltIn()) {
                 if(!it->second->isSimple())
                 {
@@ -815,3 +822,12 @@ int main(int argc, char** argv) {
     }
 }
 
+int main(int argc, char** argv) {
+    int ret = main_wrapper(argc, argv);
+
+    for (map<FullName, Class*>::iterator it = classes.begin(); it != classes.end(); it++)
+        delete it->second;
+
+    for (map<FullName, Class*>::iterator it = groups.begin(); it != groups.end(); it++)
+        delete it->second;
+}
