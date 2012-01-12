@@ -395,6 +395,14 @@ void Class::writeImplementation(ostream& os) const {
     os << "void " << className << "::parseNode(xercesc::DOMElement *" << nodeWithPostfix << ") {" << endl;
     os << generateParser() << endl;
     os << "}" << endl << endl;
+
+    os << "std::ostream& operator<< (std::ostream& os, const " << className << "& obj) {" << endl;
+    os << "\tjames::marshal(os, obj, static_cast<void (james::XMLObject::*)(xercesc::DOMElement*) const>(&" << className << "::appendChildren), obj.getName(), obj.getNamespace());" << endl;
+    os << "}" << endl << endl;
+
+    os << "std::istream& operator>> (std::istream& is, " << className << "& obj) {" << endl;
+    os << "\treturn james::unmarshal(is, obj, static_cast<void (james::XMLObject::*)(xercesc::DOMElement*)>(&" << className << "::parseNode), obj.getName());" << endl;
+    os << "}" << endl << endl;
 }
 
 set<string> Class::getIncludedClasses() const {
@@ -557,6 +565,9 @@ void Class::writeHeader(ostream& os) const {
 
         os << "};" << endl;
         os << endl;
+        os << "std::ostream& operator<< (std::ostream& os, const " << className << "& obj);" << endl;
+        os << "std::istream& operator>> (std::istream& is, " << className << "& obj);" << endl;
+        os << endl;
 
         //include classes that we prototyped earlier
         for(set<string>::const_iterator it = classesToPrototype.begin(); it != classesToPrototype.end(); it++)
@@ -565,7 +576,7 @@ void Class::writeHeader(ostream& os) const {
         if(classesToPrototype.size() > 0)
             os << endl;
     }
-    
+
     os << "#endif //_" << className << "_H" << endl;
 }
 
