@@ -17,7 +17,7 @@ The program is known to compile in *NIX like system (GNU/Linux, Mac OS X) via Ma
 Dependencies
 ------------
 
-james depends on Xerces-C++ 2.8.x or 3.1.x and Boost 1.32.0 or later (boost::shared_ptr).
+james depends on Xerces-C++ 2.8.x or 3.1.x.
 
 Building
 --------
@@ -213,7 +213,6 @@ TODO
 ====
 
 * Support more XSL features (within reason)
-* Remove dependency on Boost
 * Make switching between Xerces-C++ 2.8.x and 3.1.x easier
 * Create output directory if it doesn't exist
 * Some way of specifying one or namespaces into which the generated classes can be put
