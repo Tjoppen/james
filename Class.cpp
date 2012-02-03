@@ -397,7 +397,7 @@ void Class::writeImplementation(ostream& os) const {
     os << "}" << endl << endl;
 
     os << "std::ostream& operator<< (std::ostream& os, const " << className << "& obj) {" << endl;
-    os << "\tjames::marshal(os, obj, static_cast<void (james::XMLObject::*)(xercesc::DOMElement*) const>(&" << className << "::appendChildren), obj.getName(), obj.getNamespace());" << endl;
+    os << "\treturn james::marshal(os, obj, static_cast<void (james::XMLObject::*)(xercesc::DOMElement*) const>(&" << className << "::appendChildren), obj.getName(), obj.getNamespace());" << endl;
     os << "}" << endl << endl;
 
     os << "std::istream& operator>> (std::istream& is, " << className << "& obj) {" << endl;
