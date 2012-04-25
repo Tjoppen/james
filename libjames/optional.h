@@ -70,13 +70,6 @@ namespace james {
                 delete t;
         }
 
-        /**
-         * @deprecated Use optional::isSet() instead
-         */
-        james_attribute_deprecated operator bool () const {
-            return t != NULL;
-        }
-
         bool isSet() const {
             return t != NULL;
         }
@@ -138,20 +131,6 @@ namespace james {
                 return defaultValue;
             else
                 return *t;
-        }
-
-        /**
-         * @deprecated Use optional::get() instead
-         */
-        james_attribute_deprecated const T& operator * () const {
-            return get();
-        }
-
-        /**
-         * @deprecated Use optional::get() instead
-         */
-        james_attribute_deprecated T& operator * () {
-            return get();
         }
 
         void clear() {
