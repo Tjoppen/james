@@ -274,8 +274,11 @@ static void parseSequence(DOMElement *parent, DOMElement *sequence, Class *cl, b
     //simply put this means the <sequence> tags are ignored
     vector<DOMElement*> subSequences = getChildElementsByTagName(sequence, "sequence");
 
-    if(subSequences.size() > 0 && !choice)
-        throw runtime_error("Found <sequence> element in another <sequence> element");
+    if(subSequences.size() > 0 && !choice) {
+        //pretend nested sequences are choices for now
+        //TODO: we should probably parse the upper sequence's minOccurs/maxOccurs
+        choice = true;
+    }
 
     children.insert(children.end(), subSequences.begin(), subSequences.end());
     
