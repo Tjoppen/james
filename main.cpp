@@ -162,6 +162,9 @@ const char *keywords[] = {
     "while",
     "xor",
     "xor_eq",
+
+    //other "keywords"
+    "content",  //complexTypes with simpleContent
 };
 
 static void initKeywordSet() {
