@@ -612,7 +612,8 @@ std::list<Class::Member> Class::getElements(bool includeBase, bool vectors, bool
 
     //regard the contents of a complexType with simpleContents as a required
     //element named "content" since we already have that as an element
-    if(base && base->isSimple()) {
+    //check isBuiltIn() else we end up adding "content" more than once
+    if(base && base->isSimple() && base->isBuiltIn()) {
         Member contentMember;
         contentMember.name = "content";
         contentMember.cl = base;
