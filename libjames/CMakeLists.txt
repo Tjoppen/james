@@ -3,7 +3,6 @@ add_library(libjames
     Exceptions.cpp
     HexBinary.cpp
     XercesString.cpp
-    XMLDocument.cpp
     XMLObject.cpp
 )
 
