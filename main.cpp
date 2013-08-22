@@ -34,6 +34,10 @@
 #include <xercesc/dom/DOMAttr.hpp>
 #include <xercesc/dom/DOMNamedNodeMap.hpp>
 
+#ifndef WIN32
+ #include <unistd.h>
+#endif
+
 #include "main.h"
 #include "libjames/XercesString.h"
 #include "Class.h"
