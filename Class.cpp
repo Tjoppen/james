@@ -443,6 +443,10 @@ void Class::writeHeader(ostream& os) const {
     os << "XERCES_CPP_NAMESPACE_BEGIN class DOMElement; XERCES_CPP_NAMESPACE_END" << endl;
     os << "#include <libjames/HexBinary.h>" << endl;
     os << "#include <libjames/optional.h>" << endl;
+    os << "// Fix issue with identifiers named 'major' or 'minor'" << endl;
+    os << "// See https://bugzilla.redhat.com/show_bug.cgi?id=130601" << endl;
+    os << "#undef major" << endl;
+    os << "#undef minor" << endl;
     
     //simple types only need a typedef
     if(isSimple()) {
