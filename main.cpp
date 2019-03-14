@@ -840,4 +840,6 @@ int main(int argc, char** argv) {
 
     for (map<FullName, Class*>::iterator it = groups.begin(); it != groups.end(); it++)
         delete it->second;
+
+    return ret;
 }
